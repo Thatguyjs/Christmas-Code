@@ -60,17 +60,19 @@ function request(req, res) {
 
 
 async function main() {
-	while(isNaN(port)) port = +(await input('port: ')) || 80;
+	while(isNaN(+port)) port = (await input('port: ')) || 80;
+	port = +port;
 	year = (await input('year: ')) || new Date().getFullYear().toString();
 
 	io.close();
 
 	if(year === 'list') {
 		console.log('\nListing possible years:');
+		const blacklist = ['include', '.git'];
 
 		fs.readdir('./', { withFileTypes: true }, (error, files) => {
 			for(let f in files) {
-				if(files[f].isDirectory() && files[f].name !== 'include') {
+				if(files[f].isDirectory() && !blacklist.includes(files[f].name)) {
 					console.log(files[f].name);
 				}
 			}

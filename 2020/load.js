@@ -1,5 +1,5 @@
-window.addEventListener('load', () => {
-	Renderer.init();
+window.addEventListener('load', async () => {
+	await Renderer.init();
 
-	Main.init();
+	await Main.init();
 });
