@@ -12,8 +12,7 @@ const Renderer = {
 	perspective: { fov: 45, aspect: null },
 	orthographic: { left: -1, right: 1, bottom: -1, top: 1 },
 	clip: { near: 0.1, far: 100 },
-	projection: { type: '', matrix: mat4.create() },
-	modelView: mat4.create(),
+	projection: '',
 
 
 	// Program info
@@ -44,7 +43,11 @@ const Renderer = {
 			name,
 			program: await Gfx.createProgram(this.gl, options),
 			attributes: {},
-			uniforms: {}
+			uniforms: {},
+			matrix: {
+				projection: mat4.create(),
+				modelView: mat4.create()
+			}
 		};
 
 		let replaceProgram = null;
@@ -112,10 +115,10 @@ const Renderer = {
 	// Set the projection matrix
 	setProjectionType: function(type) {
 		if(type === 'ortho' || type === 'orthographic') {
-			this.projection.type = 'orthographic';
+			this.projection = 'orthographic';
 
 			mat4.ortho(
-				this.projection.matrix,
+				this.program.matrix.projection,
 				this.orthographic.left,
 				this.orthographic.right,
 				this.orthographic.bottom,
@@ -125,10 +128,10 @@ const Renderer = {
 			);
 		}
 		else if(type === 'persp' || type === 'perspective') {
-			this.projection.type = 'perspective';
+			this.projection = 'perspective';
 
 			mat4.perspective(
-				this.projection.matrix,
+				this.program.matrix.projection,
 				this.perspective.fov,
 				this.perspective.aspect,
 				this.clip.near,
