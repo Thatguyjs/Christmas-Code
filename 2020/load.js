@@ -4,5 +4,6 @@ window.addEventListener('load', async () => {
 	await Main.init();
 
 	// Sample scripts
-	await SampleRenderImage.init();
+	// await SampleRenderColor.init();
+	// await SampleRenderImage.init();
 });

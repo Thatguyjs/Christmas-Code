@@ -32,72 +32,58 @@ const SampleRenderImage = {
 
 
 	render: function() {
-		Renderer.clear();
-
 		// Variable locations
 		const posLoc = Renderer.getItemLocation('position', 'attribute', 'aVertexPosition');
 		const coordLoc = Renderer.getItemLocation('coord', 'attribute', 'aTexCoord');
 
-		// Setup positions
-		let pos = new Float32Array([
-			0, 0,
-			32, 0,
-			0, 32,
+		// Vertex array object
+		const vao = Renderer.gl.createVertexArray();
+		Renderer.gl.bindVertexArray(vao);
 
-			32, 0,
-			0, 32,
-			32, 32
+		// Position buffer
+		Renderer.gl.enableVertexAttribArray(posLoc);
+
+		const posArr = new Float32Array([
+			-1, -1, -1,
+			1, -1, -1,
+			-1, 1, -1,
+			1, -1, -1,
+			-1, 1, -1,
+			1, 1, -1
 		]);
 
-		let posBuf = Gfx.createBuffer(
+		const posBuf = Gfx.createBuffer(
 			Renderer.gl,
 			Renderer.gl.ARRAY_BUFFER,
-			pos,
+			posArr,
 			Renderer.gl.STATIC_DRAW
 		);
 
-		Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, posBuf);
-		Renderer.gl.vertexAttribPointer(
-			posLoc,
-			3,
-			Renderer.gl.FLOAT,
-			true,
-			0,
-			0
-		);
-		Renderer.gl.enableVertexAttribArray(posLoc);
+		Renderer.gl.vertexAttribPointer(posLoc, 3, Renderer.gl.FLOAT, false, 0, 0);
 
-		const texBuf = Gfx.createBuffer(
+		// Texcoord buffer
+		const coordBuf = Gfx.createBuffer(
 			Renderer.gl,
 			Renderer.gl.ARRAY_BUFFER,
 			new Float32Array([
+				0, 1,
+				1, 1,
 				0, 0,
-				1, 0,
-				0, 1,
-
-				1, 0,
-				0, 1,
-				1, 1
+				0, 0,
+				1, 1,
+				1, 0
 			]),
 			Renderer.gl.STATIC_DRAW
 		);
 
-		Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, texBuf);
-		Renderer.gl.vertexAttribPointer(
-			coordLoc,
-			2,
-			Renderer.gl.FLOAT,
-			true,
-			0,
-			0
-		);
 		Renderer.gl.enableVertexAttribArray(coordLoc);
+		Renderer.gl.vertexAttribPointer(coordLoc, 2, Renderer.gl.FLOAT, true, 0, 0);
 
-		const tex = Renderer.gl.createTexture();
-		Renderer.gl.activeTexture(Renderer.gl.TEXTURE0 + 0);
-		Renderer.gl.bindTexture(Renderer.gl.TEXTURE_2D, tex);
+		// Texture
+		let texture = Renderer.gl.createTexture();
+		Renderer.gl.activeTexture(Renderer.gl.TEXTURE0);
+		Renderer.gl.bindTexture(Renderer.gl.TEXTURE_2D, texture);
 
-		// Temp pixel
 		Renderer.gl.texImage2D(
 			Renderer.gl.TEXTURE_2D,
 			0,
@@ -108,10 +94,12 @@ const SampleRenderImage = {
 			new Uint8Array([255, 0, 0, 255])
 		);
 
-		const image = new Image();
+		// Load an image
+		let image = new Image();
+		image.src = "sample/sample.png";
 
 		image.addEventListener('load', () => {
-			Renderer.gl.bindTexture(Renderer.gl.TEXTURE_2D, tex);
+			Renderer.gl.bindTexture(Renderer.gl.TEXTURE_2D, texture);
 			Renderer.gl.texImage2D(
 				Renderer.gl.TEXTURE_2D,
 				0,
@@ -119,12 +107,14 @@ const SampleRenderImage = {
 				Renderer.gl.UNSIGNED_BYTE,
 				image
 			);
+
 			Renderer.gl.generateMipmap(Renderer.gl.TEXTURE_2D);
 
+			Renderer.clear();
+
+			Renderer.gl.bindVertexArray(vao);
 			Renderer.gl.drawArrays(Renderer.gl.TRIANGLES, 0, 6);
 		});
-
-		image.src = "sample/sample.png";
 	}
 
 };
