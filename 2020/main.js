@@ -50,7 +50,7 @@ const Main = {
 			Renderer.gl.TEXTURE0,
 			Renderer.gl.RGBA,
 			Renderer.gl.UNSIGNED_BYTE,
-			"sample/sample.png"
+			"sample/sample2.png"
 		);
 
 		await this.texture.load();
