@@ -11,6 +11,10 @@ const Ground = {
 	_indices: null,
 
 
+	// Number of triangles
+	_triangleNum: 0,
+
+
 	// Convert polar coordinates to cartesian coordinates
 	polarToCartesian: function(dist, rot) {
 		return {
@@ -29,7 +33,9 @@ const Ground = {
 	// Generate a ground plane
 	generate: function(rings, pointNum) {
 		this._points = new Float32Array(rings * pointNum * 3 + 3);
-		this._indices = new Float32Array(((rings * pointNum - pointNum) * 2 + pointNum) * 3);
+		this._indices = new Uint16Array(((rings * pointNum - pointNum) * 2 + pointNum) * 3);
+
+		this._triangleNum = (rings * pointNum - pointNum) * 2 + pointNum;
 
 		// Center point
 		this._points[0] = 0;
@@ -95,6 +101,12 @@ const Ground = {
 	// Get the index buffer
 	get indices() {
 		return this._indices;
+	},
+
+
+	// Get the number of triangles
+	get triangleCount() {
+		return this._triangleNum;
 	}
 
 }

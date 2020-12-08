@@ -1,5 +1,18 @@
 const SampleRenderImage = {
 
+	 // Shader variables
+	vars: {},
+
+
+	// Vertex array
+	vao: null,
+
+
+	// Texture
+	texture: null,
+
+
+	// Initialize renderer
 	init: async function() {
 		await Renderer.createProgram('main', {
 			vertex: '@include/gl/texture.vert',
@@ -26,95 +39,43 @@ const SampleRenderImage = {
 		Renderer.setUniformMatrix('projection', 4, Renderer.program.matrix.projection);
 		Renderer.setUniformMatrix('modelView', 4, Renderer.program.matrix.modelView);
 
+		this.vars.position = Renderer.getItemLocation('position', 'attribute', 'aVertexPosition');
+		this.vars.coord = Renderer.getItemLocation('coord', 'attribute', 'aTexCoord');
+
+
+		// Rendering setup
+		this.vao = Renderer.gl.createVertexArray();
+		Renderer.gl.bindVertexArray(this.vao);
+
+		this.texture = new Gfx.Texture2D(
+			Renderer.gl,
+			Renderer.gl.STATIC_DRAW,
+			Renderer.gl.TEXTURE0,
+			Renderer.gl.RGBA,
+			Renderer.gl.UNSIGNED_BYTE,
+			"sample/sample2.png"
+		);
+
+		await this.texture.load();
+
+		Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, this.texture.positions);
+		Renderer.gl.enableVertexAttribArray(this.vars.position);
+		Renderer.gl.vertexAttribPointer(this.vars.position, 3, Renderer.gl.FLOAT, false, 0, 0);
+
+		Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, this.texture.coordinates);
+		Renderer.gl.enableVertexAttribArray(this.vars.coord);
+		Renderer.gl.vertexAttribPointer(this.vars.coord, 2, Renderer.gl.FLOAT, true, 0, 0);
+
 		// Render the scene
 		this.render();
 	},
 
 
 	render: function() {
-		// Variable locations
-		const posLoc = Renderer.getItemLocation('position', 'attribute', 'aVertexPosition');
-		const coordLoc = Renderer.getItemLocation('coord', 'attribute', 'aTexCoord');
+		Renderer.clear();
 
-		// Vertex array object
-		const vao = Renderer.gl.createVertexArray();
-		Renderer.gl.bindVertexArray(vao);
-
-		// Position buffer
-		Renderer.gl.enableVertexAttribArray(posLoc);
-
-		const posArr = new Float32Array([
-			-1, -1, -1,
-			1, -1, -1,
-			-1, 1, -1,
-			1, -1, -1,
-			-1, 1, -1,
-			1, 1, -1
-		]);
-
-		const posBuf = Gfx.createBuffer(
-			Renderer.gl,
-			Renderer.gl.ARRAY_BUFFER,
-			posArr,
-			Renderer.gl.STATIC_DRAW
-		);
-
-		Renderer.gl.vertexAttribPointer(posLoc, 3, Renderer.gl.FLOAT, false, 0, 0);
-
-		// Texcoord buffer
-		const coordBuf = Gfx.createBuffer(
-			Renderer.gl,
-			Renderer.gl.ARRAY_BUFFER,
-			new Float32Array([
-				0, 1,
-				1, 1,
-				0, 0,
-				0, 0,
-				1, 1,
-				1, 0
-			]),
-			Renderer.gl.STATIC_DRAW
-		);
-
-		Renderer.gl.enableVertexAttribArray(coordLoc);
-		Renderer.gl.vertexAttribPointer(coordLoc, 2, Renderer.gl.FLOAT, true, 0, 0);
-
-		// Texture
-		let texture = Renderer.gl.createTexture();
-		Renderer.gl.activeTexture(Renderer.gl.TEXTURE0);
-		Renderer.gl.bindTexture(Renderer.gl.TEXTURE_2D, texture);
-
-		Renderer.gl.texImage2D(
-			Renderer.gl.TEXTURE_2D,
-			0,
-			Renderer.gl.RGBA,
-			1, 1, 0,
-			Renderer.gl.RGBA,
-			Renderer.gl.UNSIGNED_BYTE,
-			new Uint8Array([255, 0, 0, 255])
-		);
-
-		// Load an image
-		let image = new Image();
-		image.src = "sample/sample.png";
-
-		image.addEventListener('load', () => {
-			Renderer.gl.bindTexture(Renderer.gl.TEXTURE_2D, texture);
-			Renderer.gl.texImage2D(
-				Renderer.gl.TEXTURE_2D,
-				0,
-				Renderer.gl.RGBA, Renderer.gl.RGBA,
-				Renderer.gl.UNSIGNED_BYTE,
-				image
-			);
-
-			Renderer.gl.generateMipmap(Renderer.gl.TEXTURE_2D);
-
-			Renderer.clear();
-
-			Renderer.gl.bindVertexArray(vao);
-			Renderer.gl.drawArrays(Renderer.gl.TRIANGLES, 0, 6);
-		});
+		Renderer.gl.bindVertexArray(this.vao);
+		Renderer.gl.drawArrays(Renderer.gl.TRIANGLES, 0, 6);
 	}
 
 };
