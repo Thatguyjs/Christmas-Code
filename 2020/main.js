@@ -39,7 +39,7 @@ const Main = {
 		this.vars.color = Renderer.getItemLocation('color', 'attribute', 'aVertexColor');
 
 		// Positions
-		Ground.generate(8, 16);
+		Ground.generate(1, 8);
 
 		Gfx.createBuffer(
 			Renderer.gl,
@@ -78,6 +78,21 @@ const Main = {
 			colBuf[i * 12 + 11] = 1;
 		}
 
+		colBuf[0] = 1;
+		colBuf[1] = 0;
+		colBuf[2] = 0;
+		colBuf[3] = 1;
+
+		colBuf[4] = 1;
+		colBuf[5] = 0;
+		colBuf[6] = 0;
+		colBuf[7] = 1;
+
+		colBuf[8] = 1;
+		colBuf[9] = 0;
+		colBuf[10] = 0;
+		colBuf[11] = 1;
+
 		Gfx.createBuffer(
 			Renderer.gl,
 			Renderer.gl.ARRAY_BUFFER,
@@ -104,7 +119,8 @@ const Main = {
 		);
 
 		// Render the scene
-		this.render();
+		Renderer.gl.bindBuffer(Renderer.gl.ELEMENT_ARRAY_BUFFER, this.indices);
+		window.requestAnimationFrame(this.render);
 	},
 
 
@@ -112,7 +128,14 @@ const Main = {
 	render: function() {
 		Renderer.clear();
 
-		Renderer.gl.bindBuffer(Renderer.gl.ELEMENT_ARRAY_BUFFER, this.indices);
+		mat4.rotate(
+			Renderer.program.matrix.modelView,
+			Renderer.program.matrix.modelView,
+			0.01,
+			[0, 1, 1]
+		);
+
+		Renderer.setUniformMatrix('modelView', 4, Renderer.program.matrix.modelView);
 
 		Renderer.gl.drawElements(
 			Renderer.gl.TRIANGLES,
@@ -121,7 +144,7 @@ const Main = {
 			0
 		);
 
-		console.log('render');
+		window.requestAnimationFrame(Main.render);
 	}
 
 };
