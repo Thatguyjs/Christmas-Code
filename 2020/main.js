@@ -39,7 +39,7 @@ const Main = {
 		this.vars.color = Renderer.getItemLocation('color', 'attribute', 'aVertexColor');
 
 		// Positions
-		Ground.generate(1, 8);
+		Ground.generate(8, 16);
 
 		Gfx.createBuffer(
 			Renderer.gl,
@@ -59,39 +59,17 @@ const Main = {
 		Renderer.gl.enableVertexAttribArray(this.vars.position);
 
 		// Colors
-		let colBuf = new Float32Array(Ground.triangleCount * 12);
+		let colBuf = new Float32Array(Ground.pointCount * 4);
 
-		for(let i = 0; i < Ground.triangleCount; i++) {
-			colBuf[i * 12] = i / Ground.triangleCount;
-			colBuf[i * 12 + 1] = 0;
-			colBuf[i * 12 + 2] = 0;
-			colBuf[i * 12 + 3] = 1;
+		for(let i = 0; i < Ground.pointCount; i++) {
+			const z = Ground.points[i * 3 + 2];
+			const col = (z * 2) + 0.5;
 
-			colBuf[i * 12 + 4] = i / Ground.triangleCount;
-			colBuf[i * 12 + 5] = 0;
-			colBuf[i * 12 + 6] = 0;
-			colBuf[i * 12 + 7] = 1;
-
-			colBuf[i * 12 + 8] = i / Ground.triangleCount;
-			colBuf[i * 12 + 9] = 0;
-			colBuf[i * 12 + 10] = 0;
-			colBuf[i * 12 + 11] = 1;
+			colBuf[i * 4] = col;
+			colBuf[i * 4 + 1] = col;
+			colBuf[i * 4 + 2] = col;
+			colBuf[i * 4 + 3] = 1;
 		}
-
-		colBuf[0] = 1;
-		colBuf[1] = 0;
-		colBuf[2] = 0;
-		colBuf[3] = 1;
-
-		colBuf[4] = 1;
-		colBuf[5] = 0;
-		colBuf[6] = 0;
-		colBuf[7] = 1;
-
-		colBuf[8] = 1;
-		colBuf[9] = 0;
-		colBuf[10] = 0;
-		colBuf[11] = 1;
 
 		Gfx.createBuffer(
 			Renderer.gl,
