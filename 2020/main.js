@@ -28,7 +28,7 @@ const Main = {
 
 		// Setup rendering type & translation
 		Renderer.setProjectionType('perspective');
-		mat4.translate(Renderer.program.matrix.modelView, Renderer.program.matrix.modelView, [0, 0, -3]);
+		mat4.translate(Renderer.program.matrix.projection, Renderer.program.matrix.projection, [0, 0, -3]);
 
 		// Set matrices
 		Renderer.setUniformMatrix('projection', 4, Renderer.program.matrix.projection);
@@ -63,7 +63,7 @@ const Main = {
 
 		for(let i = 0; i < Ground.pointCount; i++) {
 			const z = Ground.points[i * 3 + 2];
-			const col = (z * 2) + 0.5;
+			const col = Math.min((z * 2) + 0.55, 1);
 
 			colBuf[i * 4] = col;
 			colBuf[i * 4 + 1] = col;

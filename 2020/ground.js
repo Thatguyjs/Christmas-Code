@@ -19,6 +19,10 @@ const Ground = {
 	_triangleNum: 0,
 
 
+	// OpenSimplex noise object
+	_noise: openSimplexNoise(Date.now()),
+
+
 	// Convert polar coordinates to cartesian coordinates
 	polarToCartesian: function(dist, rot) {
 		return {
@@ -45,7 +49,7 @@ const Ground = {
 		// Center point
 		this._points[0] = 0;
 		this._points[1] = 0;
-		this._points[2] = Math.random() / 10;
+		this._points[2] = 0;
 
 		// Other points
 		for(let r = 1; r <= rings; r++) {
@@ -56,7 +60,7 @@ const Ground = {
 				// x, y, z
 				this._points[index] = point.x;
 				this._points[index + 1] = point.y;
-				this._points[index + 2] = Math.random() / 10;
+				this._points[index + 2] = this._noise.noise2D(point.x, point.y) / 5;
 			}
 		}
 
