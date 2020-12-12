@@ -32,12 +32,6 @@ const Ground = {
 	},
 
 
-	// Generate points
-	init: function() {
-		// Todo
-	},
-
-
 	// Generate a ground plane
 	generate: function(rings, pointNum) {
 		this._triangleNum = (rings * pointNum - pointNum) * 2 + pointNum;
