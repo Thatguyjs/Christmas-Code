@@ -4,19 +4,12 @@ const Main = {
 	vars: {},
 
 
-	// Ground buffers
-	groundBuf: {
-		points: null,
-		indices: null,
-		colors: null
-	},
+	// Vertex buffer
+	vertexBuf: null,
 
 
-	// Particle buffers
-	particleBuf: {
-		points: null,
-		colors: null
-	},
+	// Color buffer
+	colorBuf: null,
 
 
 	init: async function() {
@@ -52,46 +45,35 @@ const Main = {
 		// Positions
 		Ground.generate(8, 16);
 
-		this.groundBuf.points = Gfx.createBuffer(
-			Renderer.gl,
-			Renderer.gl.ARRAY_BUFFER,
-			Ground.points,
-			Renderer.gl.STATIC_DRAW
-		);
-
 		// Colors
-		let colBuf = new Float32Array(Ground.pointCount * 4);
+		const groundColors = new Float32Array(Ground.pointCount * 4);
 
 		for(let i = 0; i < Ground.pointCount; i++) {
 			const z = Ground.points[i * 3 + 2];
 			const col = Math.min((z * 2) + 0.55, 1);
 
-			colBuf[i * 4] = col;
-			colBuf[i * 4 + 1] = col;
-			colBuf[i * 4 + 2] = col;
-			colBuf[i * 4 + 3] = 1;
+			groundColors[i * 4] = col;
+			groundColors[i * 4 + 1] = col;
+			groundColors[i * 4 + 2] = col;
+			groundColors[i * 4 + 3] = 1;
 		}
-
-		// Create & bind the buffer
-		this.groundBuf.colors = Gfx.createBuffer(
-			Renderer.gl,
-			Renderer.gl.ARRAY_BUFFER,
-			colBuf,
-			Renderer.gl.STATIC_DRAW
-		);
-
-		// Indices
-		this.groundBuf.indices = Gfx.createBuffer(
-			Renderer.gl,
-			Renderer.gl.ELEMENT_ARRAY_BUFFER,
-			Ground.indices,
-			Renderer.gl.STATIC_DRAW
-		);
 
 
 		// Particles
 		Particles.generate(1);
-		
+
+
+		// Add everything to the vertex buffer
+		this.vertexBuf = new Float32Array(Ground.points.length + Particles.points.length);
+		this.vertexBuf.set(Ground.points, 0);
+		this.vertexBuf.set(Particles.points, Ground.points.length);
+
+
+		// Add everything to the color buffer
+		this.colorBuf = new Float32Array(groundColors.length + Particles.colors.length);
+		this.colorBuf.set(groundColors, 0);
+		this.colorBuf.set(Particles.colors, groundColors.length);
+
 
 		// Set up vars
 		Renderer.gl.enableVertexAttribArray(this.vars.position);
@@ -116,39 +98,39 @@ const Main = {
 		Renderer.setUniformMatrix('projection', 4, Renderer.program.matrix.projection);
 
 		// Load the ground buffers
-		Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, Main.groundBuf.points);
-
-		Renderer.gl.vertexAttribPointer(
-			Main.vars.position,
-			3,
-			Renderer.gl.FLOAT,
-			false,
-			0,
-			0
-		);
-		Renderer.gl.enableVertexAttribArray(Main.vars.position);
-
-		Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, Main.groundBuf.colors);
-
-		Renderer.gl.vertexAttribPointer(
-			Main.vars.colors,
-			4,
-			Renderer.gl.FLOAT,
-			false,
-			0,
-			0
-		);
-		Renderer.gl.enableVertexAttribArray(Main.vars.color);
-
-		// Draw the ground
-		Renderer.gl.bindBuffer(Renderer.gl.ELEMENT_ARRAY_BUFFER, Main.groundBuf.indices);
-
-		Renderer.gl.drawElements(
-			Renderer.gl.TRIANGLES,
-			Ground.indices.length,
-			Renderer.gl.UNSIGNED_SHORT,
-			0
-		);
+		// Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, Main.groundBuf.points);
+		//
+		// Renderer.gl.vertexAttribPointer(
+		// 	Main.vars.position,
+		// 	3,
+		// 	Renderer.gl.FLOAT,
+		// 	false,
+		// 	0,
+		// 	0
+		// );
+		// Renderer.gl.enableVertexAttribArray(Main.vars.position);
+		//
+		// Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, Main.groundBuf.colors);
+		//
+		// Renderer.gl.vertexAttribPointer(
+		// 	Main.vars.colors,
+		// 	4,
+		// 	Renderer.gl.FLOAT,
+		// 	false,
+		// 	0,
+		// 	0
+		// );
+		// Renderer.gl.enableVertexAttribArray(Main.vars.color);
+		//
+		// // Draw the ground
+		// Renderer.gl.bindBuffer(Renderer.gl.ELEMENT_ARRAY_BUFFER, Main.groundBuf.indices);
+		//
+		// Renderer.gl.drawElements(
+		// 	Renderer.gl.TRIANGLES,
+		// 	Ground.indices.length,
+		// 	Renderer.gl.UNSIGNED_SHORT,
+		// 	0
+		// );
 
 		// Load the particle buffers
 		// Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, Main.particleBuf.points);
