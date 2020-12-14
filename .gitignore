@@ -1,2 +1,5 @@
 # GIMP image files
 *.xcf
+
+# Old file versions
+*_old.*

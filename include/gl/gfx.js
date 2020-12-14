@@ -9,6 +9,15 @@ const Gfx = {
 	},
 
 
+	// Convert polar coordinates to cartesian coordinates
+	polarToCartesian: function(dist, rot) {
+		return {
+			x: dist * Math.cos(rot),
+			y: dist * Math.sin(rot)
+		};
+	},
+
+
 	// Load shaders into a new GL program
 	createProgram: async function(gl, shaders) {
 		let vertexSource = "";

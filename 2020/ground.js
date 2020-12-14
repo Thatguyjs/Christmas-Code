@@ -23,15 +23,6 @@ const Ground = {
 	_noise: openSimplexNoise(Date.now()),
 
 
-	// Convert polar coordinates to cartesian coordinates
-	polarToCartesian: function(dist, rot) {
-		return {
-			x: dist * Math.cos(rot),
-			y: dist * Math.sin(rot)
-		};
-	},
-
-
 	// Generate a ground plane
 	generate: function(rings, pointNum) {
 		this._triangleNum = (rings * pointNum - pointNum) * 2 + pointNum;
@@ -49,7 +40,7 @@ const Ground = {
 		for(let r = 1; r <= rings; r++) {
 			for(let p = 0; p < pointNum; p++) {
 				const index = ((r - 1) * pointNum + p) * 3 + 3;
-				const point = this.polarToCartesian(r / rings, (Math.PI * 2) / pointNum * p);
+				const point = Gfx.polarToCartesian(r / rings, (Math.PI * 2) / pointNum * p);
 
 				// x, y, z
 				this._points[index] = point.x;
