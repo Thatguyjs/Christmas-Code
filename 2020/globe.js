@@ -1,7 +1,7 @@
-// Generate the island that the scene is on
+// Generate a snow-globe type sphere
 
 
-const Ground = {
+const Globe = {
 
 	// Point buffer
 	_points: null,
@@ -19,11 +19,7 @@ const Ground = {
 	_triangleNum: 0,
 
 
-	// OpenSimplex noise object
-	_noise: openSimplexNoise(Date.now()),
-
-
-	// Generate a ground plane
+	// Generate the globe
 	generate: function(rings, pointNum) {
 		this._triangleNum = (rings * pointNum - pointNum) * 2 + pointNum;
 		this._pointNum = rings * pointNum + 1;
@@ -35,18 +31,19 @@ const Ground = {
 		// Center point
 		this._points[0] = 0;
 		this._points[1] = 0;
-		this._points[2] = 0;
+		this._points[2] = -1;
 
 		// Other points
 		for(let r = 1; r <= rings; r++) {
 			for(let p = 0; p < pointNum; p++) {
 				const index = ((r - 1) * pointNum + p) * 3 + 3;
 				const point = Gfx.polarToCartesian(r / rings, (Math.PI * 2) / pointNum * p);
+				const z = -Math.sqrt(1 - (r / rings) ** 2);
 
 				// x, y, z
 				this._points[index] = point.x;
 				this._points[index + 1] = point.y;
-				this._points[index + 2] = this._noise.noise2D(point.x, point.y) / 5;
+				this._points[index + 2] = z;
 			}
 		}
 
@@ -85,10 +82,10 @@ const Ground = {
 			}
 		}
 
-		// Colors
+		// Color buffer
 		for(let i = 0; i < this._pointNum; i++) {
 			const z = this._points[i * 3 + 2];
-			const col = Math.min((z * 2) + 0.55, 1);
+			const col = Math.max(z + 1, 0.1);
 
 			this._colors[i * 4] = col;
 			this._colors[i * 4 + 1] = col;

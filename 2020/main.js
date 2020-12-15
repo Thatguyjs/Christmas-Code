@@ -19,6 +19,13 @@ const Main = {
 	},
 
 
+	// Globe buffers
+	globeBuf: {
+		points: null,
+		colors: null
+	},
+
+
 	init: async function() {
 		await Renderer.createProgram('main', {
 			vertex: '@include/gl/color.vert',
@@ -60,24 +67,11 @@ const Main = {
 			Renderer.gl.STATIC_DRAW
 		);
 
-		// Colors
-		let colBuf = new Float32Array(Ground.pointCount * 4);
-
-		for(let i = 0; i < Ground.pointCount; i++) {
-			const z = Ground.points[i * 3 + 2];
-			const col = Math.min((z * 2) + 0.55, 1);
-
-			colBuf[i * 4] = col;
-			colBuf[i * 4 + 1] = col;
-			colBuf[i * 4 + 2] = col;
-			colBuf[i * 4 + 3] = 1;
-		}
-
 		// Ground colors
 		this.groundBuf.colors = Gfx.createBuffer(
 			Renderer.gl,
 			Renderer.gl.ARRAY_BUFFER,
-			colBuf,
+			Ground.colors,
 			Renderer.gl.STATIC_DRAW
 		);
 
@@ -106,6 +100,26 @@ const Main = {
 			Renderer.gl,
 			Renderer.gl.ARRAY_BUFFER,
 			Particles.colors,
+			Renderer.gl.STATIC_DRAW
+		);
+
+
+		// Globe
+		Globe.generate(8, 16);
+
+		// Globe vertices
+		this.globeBuf.points = Gfx.createBuffer(
+			Renderer.gl,
+			Renderer.gl.ARRAY_BUFFER,
+			Globe.points,
+			Renderer.gl.STATIC_DRAW
+		);
+
+		// Globe colors
+		this.globeBuf.colors = Gfx.createBuffer(
+			Renderer.gl,
+			Renderer.gl.ARRAY_BUFFER,
+			Globe.colors,
 			Renderer.gl.STATIC_DRAW
 		);
 
@@ -158,12 +172,13 @@ const Main = {
 		// Draw the ground
 		Renderer.gl.bindBuffer(Renderer.gl.ELEMENT_ARRAY_BUFFER, Main.groundBuf.indices);
 
-		Renderer.gl.drawElements(
-			Renderer.gl.TRIANGLES,
-			Ground.indices.length,
-			Renderer.gl.UNSIGNED_SHORT,
-			0
-		);
+		// Renderer.gl.drawElements(
+		// 	Renderer.gl.TRIANGLES,
+		// 	Ground.indices.length,
+		// 	Renderer.gl.UNSIGNED_SHORT,
+		// 	0
+		// );
+
 
 		// Load the particle buffers
 		Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, Main.particleBuf.points);
@@ -198,8 +213,41 @@ const Main = {
 		);
 
 		Particles.update();
+		Gfx.updateBuffer(Renderer.gl, Renderer.gl.ARRAY_BUFFER, Main.particleBuf.points, Particles.points, Renderer.gl.DYNAMIC_DRAW);
 
-		Gfx.updateBuffer(Renderer.gl, Renderer.gl.ARRAY_BUFFER, Main.particleBuf.points, Particles.points, 0);
+
+		// Load the globe buffers
+		Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, Main.globeBuf.points);
+
+		Renderer.gl.vertexAttribPointer(
+			Main.vars.position,
+			3,
+			Renderer.gl.FLOAT,
+			false,
+			0,
+			0
+		);
+
+		Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, Main.globeBuf.colors);
+
+		Renderer.gl.vertexAttribPointer(
+			Main.vars.color,
+			4,
+			Renderer.gl.FLOAT,
+			false,
+			0,
+			0
+		);
+
+		// Draw the globe
+		Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, Main.globeBuf.indices);
+
+		Renderer.gl.drawElements(
+			Renderer.gl.TRIANGLES,
+			Globe.indices.length,
+			Renderer.gl.UNSIGNED_SHORT,
+			0
+		);
 
 		window.requestAnimationFrame(Main.render);
 	}

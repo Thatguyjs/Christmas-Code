@@ -86,10 +86,10 @@ const Gfx = {
 	},
 
 
-	// Modify buffer data
-	updateBuffer: function(gl, type, buffer, source, offset) {
+	// Update buffer data
+	updateBuffer: function(gl, type, buffer, source, usage) {
 		if(buffer !== null) gl.bindBuffer(type, buffer);
-		gl.bufferSubData(type, offset, source);
+		gl.bufferData(type, source, usage, 0);
 	},
 
 
