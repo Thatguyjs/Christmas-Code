@@ -47,6 +47,17 @@ const Globe = {
 			}
 		}
 
+		// Match edges with the ground edges
+		const ptNum = Ground.edgePoints.length / 3;
+		const edgeOffset = this._pointNum * 3 - pointNum * 3;
+
+		for(let p = 0; p < ptNum; p++) {
+			const thisInd = edgeOffset + p * 3; // Local edge index
+			const thatInd = p * 3; // Ground edge index
+
+			this._points[thisInd + 2] = Ground.edgePoints[thatInd + 2];
+		}
+
 		// Center indices
 		for(let i = 1; i <= pointNum; i++) {
 			let end = i + 1;

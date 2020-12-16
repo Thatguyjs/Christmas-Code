@@ -56,6 +56,11 @@ const Main = {
 		this.vars.position = Renderer.getItemLocation('position', 'attribute', 'aVertexPosition');
 		this.vars.color = Renderer.getItemLocation('color', 'attribute', 'aVertexColor');
 
+		// Enable attributes
+		Renderer.gl.enableVertexAttribArray(this.vars.position);
+		Renderer.gl.enableVertexAttribArray(this.vars.color);
+
+
 		// Positions
 		Ground.generate(8, 16);
 
@@ -123,10 +128,14 @@ const Main = {
 			Renderer.gl.STATIC_DRAW
 		);
 
+		// Globe indices
+		this.globeBuf.indices = Gfx.createBuffer(
+			Renderer.gl,
+			Renderer.gl.ELEMENT_ARRAY_BUFFER,
+			Globe.indices,
+			Renderer.gl.STATIC_DRAW
+		);
 
-		// Enable attributes
-		Renderer.gl.enableVertexAttribArray(this.vars.position);
-		Renderer.gl.enableVertexAttribArray(this.vars.color);
 
 		// Render the scene
 		window.requestAnimationFrame(this.render);
@@ -172,12 +181,12 @@ const Main = {
 		// Draw the ground
 		Renderer.gl.bindBuffer(Renderer.gl.ELEMENT_ARRAY_BUFFER, Main.groundBuf.indices);
 
-		// Renderer.gl.drawElements(
-		// 	Renderer.gl.TRIANGLES,
-		// 	Ground.indices.length,
-		// 	Renderer.gl.UNSIGNED_SHORT,
-		// 	0
-		// );
+		Renderer.gl.drawElements(
+			Renderer.gl.TRIANGLES,
+			Ground.indices.length,
+			Renderer.gl.UNSIGNED_SHORT,
+			0
+		);
 
 
 		// Load the particle buffers
@@ -240,7 +249,7 @@ const Main = {
 		);
 
 		// Draw the globe
-		Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, Main.globeBuf.indices);
+		Renderer.gl.bindBuffer(Renderer.gl.ELEMENT_ARRAY_BUFFER, Main.globeBuf.indices);
 
 		Renderer.gl.drawElements(
 			Renderer.gl.TRIANGLES,

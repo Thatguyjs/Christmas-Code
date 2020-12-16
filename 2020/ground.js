@@ -19,6 +19,10 @@ const Ground = {
 	_triangleNum: 0,
 
 
+	// Number of points per ring
+	_pointsPerRing: 0,
+
+
 	// OpenSimplex noise object
 	_noise: openSimplexNoise(Date.now()),
 
@@ -27,6 +31,7 @@ const Ground = {
 	generate: function(rings, pointNum) {
 		this._triangleNum = (rings * pointNum - pointNum) * 2 + pointNum;
 		this._pointNum = rings * pointNum + 1;
+		this._pointsPerRing = pointNum;
 
 		this._points = new Float32Array(this._pointNum * 3);
 		this._indices = new Uint16Array(this._triangleNum * 3);
@@ -113,6 +118,12 @@ const Ground = {
 	// Get the color buffer
 	get colors() {
 		return this._colors;
+	},
+
+
+	// Get edge points
+	get edgePoints() {
+		return this._points.slice(this._pointNum * 3 - this._pointsPerRing * 3);
 	},
 
 
