@@ -146,6 +146,12 @@ const Main = {
 	render: function() {
 		Renderer.clear();
 
+
+		// For opaque objects
+		Renderer.gl.disable(Renderer.gl.BLEND);
+		Renderer.gl.depthMask(true);
+
+
 		mat4.rotate(
 			Renderer.program.matrix.projection,
 			Renderer.program.matrix.projection,
@@ -181,12 +187,12 @@ const Main = {
 		// Draw the ground
 		Renderer.gl.bindBuffer(Renderer.gl.ELEMENT_ARRAY_BUFFER, Main.groundBuf.indices);
 
-		// Renderer.gl.drawElements(
-		// 	Renderer.gl.TRIANGLES,
-		// 	Ground.indices.length,
-		// 	Renderer.gl.UNSIGNED_SHORT,
-		// 	0
-		// );
+		Renderer.gl.drawElements(
+			Renderer.gl.TRIANGLES,
+			Ground.indices.length,
+			Renderer.gl.UNSIGNED_SHORT,
+			0
+		);
 
 
 		// Load the particle buffers
@@ -215,11 +221,11 @@ const Main = {
 		// Draw the particles
 		Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, Main.particleBuf.points);
 
-		// Renderer.gl.drawArrays(
-		// 	Renderer.gl.TRIANGLES,
-		// 	0,
-		// 	Particles.count * 3
-		// );
+		Renderer.gl.drawArrays(
+			Renderer.gl.TRIANGLES,
+			0,
+			Particles.count * 3
+		);
 
 		Particles.update();
 		Gfx.updateBuffer(Renderer.gl, Renderer.gl.ARRAY_BUFFER, Main.particleBuf.points, Particles.points, Renderer.gl.DYNAMIC_DRAW);
@@ -251,11 +257,25 @@ const Main = {
 		// Draw the globe
 		Renderer.gl.bindBuffer(Renderer.gl.ELEMENT_ARRAY_BUFFER, Main.globeBuf.indices);
 
+		// Bottom half
 		Renderer.gl.drawElements(
 			Renderer.gl.TRIANGLES,
-			Globe.indices.length,
+			Globe.indices.length / 2,
 			Renderer.gl.UNSIGNED_SHORT,
 			0
+		);
+
+		// Transparent objects
+		Renderer.gl.enable(Renderer.gl.BLEND);
+		Renderer.gl.blendFunc(Renderer.gl.SRC_ALPHA, Renderer.gl.ONE_MINUS_SRC_ALPHA);
+		Renderer.gl.depthMask(false);
+
+		// Top half
+		Renderer.gl.drawElements(
+			Renderer.gl.TRIANGLES,
+			Globe.indices.length / 2,
+			Renderer.gl.UNSIGNED_SHORT,
+			Globe.indices.length
 		);
 
 		window.requestAnimationFrame(Main.render);

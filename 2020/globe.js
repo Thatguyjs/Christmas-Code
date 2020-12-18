@@ -37,7 +37,7 @@ const Globe = {
 		// Top center
 		this._points[this._pointNum * 3] = 0;
 		this._points[this._pointNum * 3 + 1] = 0;
-		this._points[this._pointNum * 3 + 2] = 0;
+		this._points[this._pointNum * 3 + 2] = 1;
 
 		// Other points
 		for(let r = 1; r <= rings; r++) {
@@ -68,7 +68,7 @@ const Globe = {
 			const thatInd = p * 3; // Ground edge index
 
 			this._points[thisInd + 2] = Ground.edgePoints[thatInd + 2];
-			// this._points[thisInd + this._pointNum * 3 + 2] = Ground.edgePoints[thatInd + 2];
+			this._points[thisInd + this._pointNum * 3 + 2] = Ground.edgePoints[thatInd + 2];
 		}
 
 		// Center indices
@@ -84,9 +84,9 @@ const Globe = {
 			this._indices[index + 2] = 0;
 
 			// Top half
-			this._indices[index + this._triangleNum * 3] = i + this._pointNum * 3;
-			this._indices[index + this._triangleNum * 3 + 1] = end + this._pointNum * 3;
-			this._indices[index + this._triangleNum * 3 + 2] = this._pointNum * 3;
+			this._indices[index + this._triangleNum * 3] = i + this._pointNum;
+			this._indices[index + this._triangleNum * 3 + 1] = end + this._pointNum;
+			this._indices[index + this._triangleNum * 3 + 2] = this._pointNum;
 		}
 
 		// Outer indices
@@ -112,13 +112,13 @@ const Globe = {
 				this._indices[index + 5] = ol;
 
 				// Top half
-				this._indices[index + this._triangleNum * 3] = ir;
-				this._indices[index + this._triangleNum * 3 + 1] = il;
-				this._indices[index + this._triangleNum * 3 + 2] = or;
+				this._indices[index + this._triangleNum * 3] = ir + this._pointNum;
+				this._indices[index + this._triangleNum * 3 + 1] = il + this._pointNum;
+				this._indices[index + this._triangleNum * 3 + 2] = or + this._pointNum;
 
-				this._indices[index + this._triangleNum * 3 + 3] = il;
-				this._indices[index + this._triangleNum * 3 + 4] = or;
-				this._indices[index + this._triangleNum * 3 + 5] = ol;
+				this._indices[index + this._triangleNum * 3 + 3] = il + this._pointNum;
+				this._indices[index + this._triangleNum * 3 + 4] = or + this._pointNum;
+				this._indices[index + this._triangleNum * 3 + 5] = ol + this._pointNum;
 			}
 		}
 
@@ -137,8 +137,24 @@ const Globe = {
 			this._colors[i * 4 + this._pointNum * 4] = col;
 			this._colors[i * 4 + this._pointNum * 4 + 1] = col;
 			this._colors[i * 4 + this._pointNum * 4 + 2] = col;
-			this._colors[i * 4 + this._pointNum * 4 + 3] = 1;
+			this._colors[i * 4 + this._pointNum * 4 + 3] = 0.1;
 		}
+	},
+
+
+	// Get a random point in the top half of the globe
+	randomPoint: function() {
+		let pos = Gfx.polarToCartesian(Math.random(), Math.random() * Math.PI * 2);
+		pos.z = Math.random() * Math.sqrt(1 - Math.sqrt(pos.x * pos.x + pos.y * pos.y) ** 2);
+
+		return pos;
+	},
+
+
+	// Get the top point from an x, y position
+	getTopPoint: function(x, y) {
+		const z = Math.sqrt(1 - Math.sqrt(x * x + y * y) ** 2);
+		return { x, y, z };
 	},
 
 
