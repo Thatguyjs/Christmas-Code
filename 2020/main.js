@@ -19,6 +19,14 @@ const Main = {
 	},
 
 
+	// Tree buffer
+	treeBuf: {
+		points: null,
+		indices: null,
+		colors: null
+	},
+
+
 	// Globe buffers
 	globeBuf: {
 		points: null,
@@ -109,6 +117,34 @@ const Main = {
 		);
 
 
+		// Trees
+		Trees.generate(10, 2);
+
+		// Tree vertices
+		this.treeBuf.points = Gfx.createBuffer(
+			Renderer.gl,
+			Renderer.gl.ARRAY_BUFFER,
+			Trees.points,
+			Renderer.gl.STATIC_DRAW
+		);
+
+		// Tree colors
+		this.treeBuf.colors = Gfx.createBuffer(
+			Renderer.gl,
+			Renderer.gl.ARRAY_BUFFER,
+			Trees.colors,
+			Renderer.gl.STATIC_DRAW
+		);
+
+		// Tree indices
+		this.treeBuf.indices = Gfx.createBuffer(
+			Renderer.gl,
+			Renderer.gl.ELEMENT_ARRAY_BUFFER,
+			Trees.indices,
+			Renderer.gl.STATIC_DRAW
+		);
+
+
 		// Globe
 		Globe.generate(8, 16);
 
@@ -146,12 +182,12 @@ const Main = {
 	render: function() {
 		Renderer.clear();
 
-
 		// For opaque objects
 		Renderer.gl.disable(Renderer.gl.BLEND);
 		Renderer.gl.depthMask(true);
 
 
+		// Camera rotation
 		mat4.rotate(
 			Renderer.program.matrix.projection,
 			Renderer.program.matrix.projection,
@@ -160,6 +196,7 @@ const Main = {
 		);
 
 		Renderer.setUniformMatrix('projection', 4, Renderer.program.matrix.projection);
+
 
 		// Load the ground buffers
 		Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, Main.groundBuf.points);
@@ -187,12 +224,12 @@ const Main = {
 		// Draw the ground
 		Renderer.gl.bindBuffer(Renderer.gl.ELEMENT_ARRAY_BUFFER, Main.groundBuf.indices);
 
-		Renderer.gl.drawElements(
-			Renderer.gl.TRIANGLES,
-			Ground.indices.length,
-			Renderer.gl.UNSIGNED_SHORT,
-			0
-		);
+		// Renderer.gl.drawElements(
+		// 	Renderer.gl.TRIANGLES,
+		// 	Ground.indices.length,
+		// 	Renderer.gl.UNSIGNED_SHORT,
+		// 	0
+		// );
 
 
 		// Load the particle buffers
@@ -229,6 +266,40 @@ const Main = {
 
 		Particles.update();
 		Gfx.updateBuffer(Renderer.gl, Renderer.gl.ARRAY_BUFFER, Main.particleBuf.points, Particles.points, Renderer.gl.DYNAMIC_DRAW);
+
+
+		// Load the tree buffers
+		Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, Main.treeBuf.points);
+
+		Renderer.gl.vertexAttribPointer(
+			Main.vars.position,
+			3,
+			Renderer.gl.FLOAT,
+			false,
+			0,
+			0
+		);
+
+		Renderer.gl.bindBuffer(Renderer.gl.ARRAY_BUFFER, Main.treeBuf.colors);
+
+		Renderer.gl.vertexAttribPointer(
+			Main.vars.color,
+			4,
+			Renderer.gl.FLOAT,
+			false,
+			0,
+			0
+		);
+
+		// Draw the trees
+		Renderer.gl.bindBuffer(Renderer.gl.ELEMENT_ARRAY_BUFFER, Main.treeBuf.indices);
+
+		Renderer.gl.drawElements(
+			Renderer.gl.TRIANGLES,
+			Trees.indices.length,
+			Renderer.gl.UNSIGNED_SHORT,
+			0
+		);
 
 
 		// Load the globe buffers

@@ -143,9 +143,9 @@ const Globe = {
 
 
 	// Get a random point in the top half of the globe
-	randomPoint: function() {
+	randomPoint: function(depth=true) {
 		let pos = Gfx.polarToCartesian(Math.random(), Math.random() * Math.PI * 2);
-		pos.z = Math.random() * Math.sqrt(1 - Math.sqrt(pos.x * pos.x + pos.y * pos.y) ** 2);
+		if(depth) pos.z = Math.random() * Math.sqrt(1 - Math.sqrt(pos.x * pos.x + pos.y * pos.y) ** 2);
 
 		return pos;
 	},
