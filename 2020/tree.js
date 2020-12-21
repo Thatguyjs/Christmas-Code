@@ -15,63 +15,71 @@ const Trees = {
 	_colors: null,
 
 
+	// Number of points
+	_pointNum: 0,
+
+
 	// Number of triangles
 	_triangleNum: 0,
 
 
 	// Generate the trees
 	generate: function(amount, sides) {
-		this._points = new Float32Array((amount + sides) * 4 * 3);
-		this._indices = new Uint16Array((amount + sides) * 6);
-		this._colors = new Float32Array((amount + sides) * 4 * 4);
+		this._pointNum = 4 * sides * amount;
+
+		this._points = new Float32Array(this._pointNum * 3); // x, y, z
+		this._indices = new Uint16Array(6 * sides * amount);
+		this._colors = new Float32Array(this._pointNum * 4); // r, g, b, a
 
 		for(let a = 0; a < amount; a++) {
 			const pos = Globe.randomPoint(false);
 
+			const ptInd = sides * a * 4 * 3;
+			const indInd = sides * a * 6;
+			const colInd = sides * a * 4 * 4;
+
 			for(let s = 0; s < sides; s++) {
-				const ptInd = (a + s) * 4 * 3;
-				const indInd = (a + s) * 6;
-				const colInd = (a + s) * 4 * 4;
+				const ptOffset = ptInd + s * 4 * 3;
+				const indOffset = indInd + s * 6;
+				const colOffset = colInd + s * 4 * 4;
 
 				// Points
-				let bl = Gfx.polarToCartesian(-0.1, Math.PI / sides * s); // Bottom-left
-				let br = Gfx.polarToCartesian(0.1, Math.PI / sides * s); // Bottom-right
-				let tl = Gfx.polarToCartesian(-0.1, Math.PI / sides * s); // Top-left
-				let tr = Gfx.polarToCartesian(0.1, Math.PI / sides * s); // Top-right
+				let left = Gfx.polarToCartesian(-0.1, Math.PI / sides * s);
+				let right = Gfx.polarToCartesian(0.1, Math.PI / sides * s);
 
-				console.log(bl, br);
+				// console.log(bl, br);
 
-				this._points[ptInd] = pos.x + bl.x;
-				this._points[ptInd + 1] = pos.y + bl.y;
-				this._points[ptInd + 2] = 0;
+				this._points[ptOffset] = pos.x + left.x;
+				this._points[ptOffset + 1] = pos.y + left.y;
+				this._points[ptOffset + 2] = 0;
 
-				this._points[ptInd + 3] = pos.x + br.x;
-				this._points[ptInd + 4] = pos.y + br.y;
-				this._points[ptInd + 5] = 0;
+				this._points[ptOffset + 3] = pos.x + right.x;
+				this._points[ptOffset + 4] = pos.y + right.y;
+				this._points[ptOffset + 5] = 0;
 
-				this._points[ptInd + 6] = pos.x + tl.x;
-				this._points[ptInd + 7] = pos.y + tl.y;
-				this._points[ptInd + 8] = 0.4;
+				this._points[ptOffset + 6] = pos.x + left.x;
+				this._points[ptOffset + 7] = pos.y + left.y;
+				this._points[ptOffset + 8] = 0.4;
 
-				this._points[ptInd + 9] = pos.x + tr.x;
-				this._points[ptInd + 10] = pos.y + tr.y;
-				this._points[ptInd + 11] = 0.4;
+				this._points[ptOffset + 9] = pos.x + right.x;
+				this._points[ptOffset + 10] = pos.y + right.y;
+				this._points[ptOffset + 11] = 0.4;
 
 				// Indices
-				this._indices[indInd] = ptInd / 3;
-				this._indices[indInd + 1] = ptInd / 3 + 1;
-				this._indices[indInd + 2] = ptInd / 3 + 2;
+				this._indices[indOffset] = ptOffset / 3;
+				this._indices[indOffset + 1] = ptOffset / 3 + 1;
+				this._indices[indOffset + 2] = ptOffset / 3 + 2;
 
-				this._indices[indInd + 3] = ptInd / 3 + 1;
-				this._indices[indInd + 4] = ptInd / 3 + 2;
-				this._indices[indInd + 5] = ptInd / 3 + 3;
+				this._indices[indOffset + 3] = ptOffset / 3 + 1;
+				this._indices[indOffset + 4] = ptOffset / 3 + 2;
+				this._indices[indOffset + 5] = ptOffset / 3 + 3;
 
 				// Colors
 				for(let c = 0; c < 4; c++) {
-					this._colors[colInd + c * 4] = 0.4;
-					this._colors[colInd + c * 4 + 1] = 0;
-					this._colors[colInd + c * 4 + 2] = 0;
-					this._colors[colInd + c * 4 + 3] = 1;
+					this._colors[colOffset + c * 4] = 0.4;
+					this._colors[colOffset + c * 4 + 1] = 0;
+					this._colors[colOffset + c * 4 + 2] = 0;
+					this._colors[colOffset + c * 4 + 3] = 1;
 				}
 			}
 		}

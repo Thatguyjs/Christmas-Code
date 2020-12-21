@@ -118,7 +118,7 @@ const Main = {
 
 
 		// Trees
-		Trees.generate(10, 2);
+		Trees.generate(8, 6);
 
 		// Tree vertices
 		this.treeBuf.points = Gfx.createBuffer(
