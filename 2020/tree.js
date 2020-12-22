@@ -25,6 +25,33 @@ const Trees = {
 
 	// Generate the trees
 	generate: function(amount, sides) {
+		this._pointNum = 19;
+
+		this._points = new Float32Array(this._pointNum * 3); // x, y, z
+		this._indices = new Uint16Array(33);
+		this._colors = new Float32Array(this._pointNum * 4); // r, g, b, a
+
+		// Points
+		this._points[0] = 0.5 - 1 / 20;
+		this._points[1] = 0;
+		this._points[2] = 0;
+
+		this._points[3] = 0.5 + 1 / 20;
+		this._points[4] = 0;
+		this._points[5] = 0;
+
+		this._points[6] = 0;
+		this._points[7] = 0;
+		this._points[8] = 0;
+
+		this._points[9] = 0;
+		this._points[10] = 0;
+		this._points[11] = 0;
+	},
+
+
+	// Generate the trees
+	generate2: function(amount, sides) {
 		this._pointNum = 4 * sides * amount;
 
 		this._points = new Float32Array(this._pointNum * 3); // x, y, z
@@ -32,7 +59,7 @@ const Trees = {
 		this._colors = new Float32Array(this._pointNum * 4); // r, g, b, a
 
 		for(let a = 0; a < amount; a++) {
-			const pos = Globe.randomPoint(false);
+			const pos = Globe.randomPoint(0, 0.8, false);
 
 			const ptInd = sides * a * 4 * 3;
 			const indInd = sides * a * 6;
