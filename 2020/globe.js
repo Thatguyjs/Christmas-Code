@@ -44,7 +44,9 @@ const Globe = {
 			for(let p = 0; p < pointNum; p++) {
 				const index = ((r - 1) * pointNum + p) * 3 + 3;
 				const point = Gfx.polarToCartesian(r / rings, (Math.PI * 2) / pointNum * p);
-				const z = -Math.sqrt(1 - (r / rings) ** 2);
+
+				let z = -Math.sqrt(1 - (r / rings) ** 2);
+				if(r === rings) z = Ground.noiseAt(point.x, point.y);
 
 				// Bottom half
 				this._points[index] = point.x;
@@ -55,20 +57,8 @@ const Globe = {
 				this._points[index + this._pointNum * 3] = point.x;
 				this._points[index + this._pointNum * 3 + 1] = point.y;
 				this._points[index + this._pointNum * 3 + 2] = -z;
+				if(r === rings) this._points[index + this._pointNum * 3 + 2] = z;
 			}
-		}
-
-		// Match edges with the ground edges
-		// TODO: Get the noise value from a point instead of checking ground edges
-		const ptNum = Ground.edgePoints.length / 3;
-		const edgeOffset = this._pointNum * 3 - pointNum * 3;
-
-		for(let p = 0; p < ptNum; p++) {
-			const thisInd = edgeOffset + p * 3; // Local edge index
-			const thatInd = p * 3; // Ground edge index
-
-			this._points[thisInd + 2] = Ground.edgePoints[thatInd + 2];
-			this._points[thisInd + this._pointNum * 3 + 2] = Ground.edgePoints[thatInd + 2];
 		}
 
 		// Center indices
@@ -145,7 +135,7 @@ const Globe = {
 	// Get a random point in the top half of the globe
 	randomPoint: function(min=0, max=1, depth=true) {
 		const dist = Math.random() * (max - min) + min;
-		
+
 		let pos = Gfx.polarToCartesian(dist, Math.random() * Math.PI * 2);
 		if(depth) pos.z = Math.random() * Math.sqrt(1 - Math.sqrt(pos.x * pos.x + pos.y * pos.y) ** 2);
 

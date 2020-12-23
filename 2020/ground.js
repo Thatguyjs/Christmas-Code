@@ -51,7 +51,7 @@ const Ground = {
 				// x, y, z
 				this._points[index] = point.x;
 				this._points[index + 1] = point.y;
-				this._points[index + 2] = this._noise.noise2D(point.x, point.y) / 5;
+				this._points[index + 2] = this.noiseAt(point.x, point.y);
 			}
 		}
 
@@ -103,6 +103,12 @@ const Ground = {
 	},
 
 
+	// Get the noise value at a specific location
+	noiseAt: function(x, y) {
+		return this._noise.noise2D(x, y) / 5;
+	},
+
+
 	// Get the point buffer
 	get points() {
 		return this._points;
@@ -118,12 +124,6 @@ const Ground = {
 	// Get the color buffer
 	get colors() {
 		return this._colors;
-	},
-
-
-	// Get edge points
-	get edgePoints() {
-		return this._points.slice(this._pointNum * 3 - this._pointsPerRing * 3);
 	},
 
 

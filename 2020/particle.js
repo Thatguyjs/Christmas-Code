@@ -32,9 +32,7 @@ const Particles = {
 
 		// Generate in random locations
 		for(let i = 0; i < amount; i++) {
-			// const pos = Gfx.polarToCartesian(Math.random(), Math.random() * Math.PI * 2);
-			// pos.z = Math.random();
-			const pos = Globe.randomPoint();
+			const pos = Globe.randomPoint(0, 0.95, true);
 
 			// Positions
 			this._points[i * 9] = pos.x - this._size;
@@ -68,8 +66,24 @@ const Particles = {
 	update: function() {
 		for(let p = 0; p < this._numPoints / 3; p++) {
 			if(this._points[p * 9 + 2] <= 0) {
+				const newPos = Globe.randomPoint(0, 0.95, false);
+				this._particles[p * 4 + 1] = newPos.x;
+				this._particles[p * 4 + 2] = newPos.y;
+				this._particles[p * 4 + 3] = newPos.z;
+
 				const top = Globe.getTopPoint(this._particles[p * 4 + 1], this._particles[p * 4 + 2]).z;
 
+				// x
+				this._points[p * 9] = newPos.x - this._size;
+				this._points[p * 9 + 3] = newPos.x + this._size;
+				this._points[p * 9 + 6] = newPos.x;
+
+				// y
+				this._points[p * 9 + 1] = newPos.y - this._size;
+				this._points[p * 9 + 4] = newPos.y - this._size;
+				this._points[p * 9 + 7] = newPos.y + this._size;
+
+				// z
 				this._points[p * 9 + 2] = top;
 				this._points[p * 9 + 5] = top;
 				this._points[p * 9 + 8] = top;

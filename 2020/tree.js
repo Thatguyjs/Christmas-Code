@@ -47,12 +47,8 @@ const Trees = {
 	_pointNum: 0,
 
 
-	// Number of triangles
-	_triangleNum: 0,
-
-
 	// Generate the trees
-	generate: function(amount, sides) {
+	generate: function(amount, sides, scale) {
 		this._pointNum = this._pointsPerFace * sides * amount;
 
 		this._points = new Float32Array(this._pointNum * 3); // x, y, z
@@ -65,7 +61,8 @@ const Trees = {
 			const indInd = sides * a * this._indicesPerFace;
 			const colInd = sides * a * this._pointsPerFace * 4;
 
-			let pos = Globe.randomPoint(0, 1.4, false);
+			let pos = Globe.randomPoint(0, 0.8, false);
+			pos.z = Ground.noiseAt(pos.x, pos.y) - 0.05;
 
 			for(let s = 0; s < sides; s++) {
 				const ptOffset = ptInd + s * this._pointsPerFace * 3;
@@ -77,9 +74,9 @@ const Trees = {
 				for(let p = 0; p < this._pointsPerFace; p++) {
 					const point = Gfx.polarToCartesian(this._pointFace[p * 2] - 0.5, Math.PI / sides * s);
 
-					this._points[ptOffset + p * 3] = pos.x + point.x;
-					this._points[ptOffset + p * 3 + 1] = pos.y + point.y;
-					this._points[ptOffset + p * 3 + 2] = this._pointFace[p * 2 + 1];
+					this._points[ptOffset + p * 3] = pos.x + point.x * scale;
+					this._points[ptOffset + p * 3 + 1] = pos.y + point.y * scale;
+					this._points[ptOffset + p * 3 + 2] = pos.z + this._pointFace[p * 2 + 1] * scale;
 				}
 
 				// Indices
@@ -154,9 +151,9 @@ const Trees = {
 	},
 
 
-	// Get the number of triangles
-	get triangleCount() {
-		return this._triangleNum;
+	// Get the number of points
+	get pointCount() {
+		return this._pointNum;
 	}
 
 };

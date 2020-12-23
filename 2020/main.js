@@ -118,7 +118,7 @@ const Main = {
 
 
 		// Trees
-		Trees.generate(8, 2);
+		Trees.generate(8, 2, 0.6);
 
 		// Tree vertices
 		this.treeBuf.points = Gfx.createBuffer(
@@ -173,6 +173,15 @@ const Main = {
 		);
 
 
+		// Initial camera rotation
+		mat4.rotate(
+			Renderer.program.matrix.projection,
+			Renderer.program.matrix.projection,
+			-Math.PI / 2.5,
+			[1, 0, 0]
+		);
+
+
 		// Render the scene
 		window.requestAnimationFrame(this.render);
 	},
@@ -192,7 +201,7 @@ const Main = {
 			Renderer.program.matrix.projection,
 			Renderer.program.matrix.projection,
 			0.01,
-			[0, 1, 1]
+			[0, 0, 1]
 		);
 
 		Renderer.setUniformMatrix('projection', 4, Renderer.program.matrix.projection);
@@ -291,12 +300,6 @@ const Main = {
 			0
 		);
 
-		// Scale the trees
-		const origMatrix = mat4.clone(Renderer.program.matrix.modelView);
-		mat4.scale(Renderer.program.matrix.modelView, Renderer.program.matrix.modelView, [0.6, 0.6, 0.6]);
-
-		Renderer.setUniformMatrix('modelView', 4, Renderer.program.matrix.modelView);
-
 		// Draw the trees
 		Renderer.gl.bindBuffer(Renderer.gl.ELEMENT_ARRAY_BUFFER, Main.treeBuf.indices);
 
@@ -306,9 +309,6 @@ const Main = {
 			Renderer.gl.UNSIGNED_SHORT,
 			0
 		);
-
-		mat4.copy(Renderer.program.matrix.modelView, origMatrix);
-		Renderer.setUniformMatrix('modelView', 4, Renderer.program.matrix.modelView);
 
 
 		// Load the globe buffers
