@@ -118,7 +118,7 @@ const Main = {
 
 
 		// Trees
-		Trees.generate(8, 6);
+		Trees.generate(8, 2);
 
 		// Tree vertices
 		this.treeBuf.points = Gfx.createBuffer(
@@ -224,12 +224,12 @@ const Main = {
 		// Draw the ground
 		Renderer.gl.bindBuffer(Renderer.gl.ELEMENT_ARRAY_BUFFER, Main.groundBuf.indices);
 
-		// Renderer.gl.drawElements(
-		// 	Renderer.gl.TRIANGLES,
-		// 	Ground.indices.length,
-		// 	Renderer.gl.UNSIGNED_SHORT,
-		// 	0
-		// );
+		Renderer.gl.drawElements(
+			Renderer.gl.TRIANGLES,
+			Ground.indices.length,
+			Renderer.gl.UNSIGNED_SHORT,
+			0
+		);
 
 
 		// Load the particle buffers
@@ -291,6 +291,12 @@ const Main = {
 			0
 		);
 
+		// Scale the trees
+		const origMatrix = mat4.clone(Renderer.program.matrix.modelView);
+		mat4.scale(Renderer.program.matrix.modelView, Renderer.program.matrix.modelView, [0.6, 0.6, 0.6]);
+
+		Renderer.setUniformMatrix('modelView', 4, Renderer.program.matrix.modelView);
+
 		// Draw the trees
 		Renderer.gl.bindBuffer(Renderer.gl.ELEMENT_ARRAY_BUFFER, Main.treeBuf.indices);
 
@@ -300,6 +306,9 @@ const Main = {
 			Renderer.gl.UNSIGNED_SHORT,
 			0
 		);
+
+		mat4.copy(Renderer.program.matrix.modelView, origMatrix);
+		Renderer.setUniformMatrix('modelView', 4, Renderer.program.matrix.modelView);
 
 
 		// Load the globe buffers

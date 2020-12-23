@@ -3,7 +3,35 @@
 
 const Trees = {
 
-	// Point buffer (for texture)
+	// A face of the tree
+	_pointsPerFace: 21,
+	_indicesPerFace: 45,
+	_pointFace: new Float32Array([
+		0.5 - 1 / 16, 0,
+		0.5 + 1 / 16, 0,
+		0.5 - 1 / 16, 1 / 6,
+		0.5 + 1 / 16, 1 / 6,
+		0.5 - 1 / 16, 1 / 6,
+		1 / 3.8, 1 / 6,
+		0.45 - 1 / 16, 2 / 6,
+		1 / 3.6, 2 / 6,
+		0.475 - 1 / 16, 3 / 6,
+		1 / 3.2, 3 / 6,
+		0.5 - 1 / 16, 4 / 6,
+		1 / 2.7, 4 / 6,
+		0.5, 5 / 6,
+		1 - 1 / 2.7, 4 / 6,
+		0.5 + 1 / 16, 4 / 6,
+		1 - 1 / 3.2, 3 / 6,
+		0.525 + 1 / 16, 3 / 6,
+		1 - 1 / 3.6, 2 / 6,
+		0.55 + 1 / 16, 2 / 6,
+		1 - 1 / 3.8, 1 / 6,
+		0.5 + 1 / 16, 1 / 6
+	]),
+
+
+	// Point buffer
 	_points: null,
 
 
@@ -25,89 +53,84 @@ const Trees = {
 
 	// Generate the trees
 	generate: function(amount, sides) {
-		this._pointNum = 19;
+		this._pointNum = this._pointsPerFace * sides * amount;
 
 		this._points = new Float32Array(this._pointNum * 3); // x, y, z
-		this._indices = new Uint16Array(33);
-		this._colors = new Float32Array(this._pointNum * 4); // r, g, b, a
-
-		// Points
-		this._points[0] = 0.5 - 1 / 20;
-		this._points[1] = 0;
-		this._points[2] = 0;
-
-		this._points[3] = 0.5 + 1 / 20;
-		this._points[4] = 0;
-		this._points[5] = 0;
-
-		this._points[6] = 0;
-		this._points[7] = 0;
-		this._points[8] = 0;
-
-		this._points[9] = 0;
-		this._points[10] = 0;
-		this._points[11] = 0;
-	},
-
-
-	// Generate the trees
-	generate2: function(amount, sides) {
-		this._pointNum = 4 * sides * amount;
-
-		this._points = new Float32Array(this._pointNum * 3); // x, y, z
-		this._indices = new Uint16Array(6 * sides * amount);
+		this._indices = new Uint16Array(this._indicesPerFace * sides * amount);
 		this._colors = new Float32Array(this._pointNum * 4); // r, g, b, a
 
 		for(let a = 0; a < amount; a++) {
-			const pos = Globe.randomPoint(0, 0.8, false);
+			const ptInd = sides * a * this._pointsPerFace * 3;
+			const indPtInd = sides * a * this._pointsPerFace;
+			const indInd = sides * a * this._indicesPerFace;
+			const colInd = sides * a * this._pointsPerFace * 4;
 
-			const ptInd = sides * a * 4 * 3;
-			const indInd = sides * a * 6;
-			const colInd = sides * a * 4 * 4;
+			let pos = Globe.randomPoint(0, 1.4, false);
 
 			for(let s = 0; s < sides; s++) {
-				const ptOffset = ptInd + s * 4 * 3;
-				const indOffset = indInd + s * 6;
-				const colOffset = colInd + s * 4 * 4;
+				const ptOffset = ptInd + s * this._pointsPerFace * 3;
+				const indPtOffset = indPtInd + s * this._pointsPerFace;
+				const indOffset = indInd + s * this._indicesPerFace;
+				const colOffset = colInd + s * this._pointsPerFace * 4;
 
 				// Points
-				let left = Gfx.polarToCartesian(-0.1, Math.PI / sides * s);
-				let right = Gfx.polarToCartesian(0.1, Math.PI / sides * s);
+				for(let p = 0; p < this._pointsPerFace; p++) {
+					const point = Gfx.polarToCartesian(this._pointFace[p * 2] - 0.5, Math.PI / sides * s);
 
-				// console.log(bl, br);
-
-				this._points[ptOffset] = pos.x + left.x;
-				this._points[ptOffset + 1] = pos.y + left.y;
-				this._points[ptOffset + 2] = 0;
-
-				this._points[ptOffset + 3] = pos.x + right.x;
-				this._points[ptOffset + 4] = pos.y + right.y;
-				this._points[ptOffset + 5] = 0;
-
-				this._points[ptOffset + 6] = pos.x + left.x;
-				this._points[ptOffset + 7] = pos.y + left.y;
-				this._points[ptOffset + 8] = 0.4;
-
-				this._points[ptOffset + 9] = pos.x + right.x;
-				this._points[ptOffset + 10] = pos.y + right.y;
-				this._points[ptOffset + 11] = 0.4;
+					this._points[ptOffset + p * 3] = pos.x + point.x;
+					this._points[ptOffset + p * 3 + 1] = pos.y + point.y;
+					this._points[ptOffset + p * 3 + 2] = this._pointFace[p * 2 + 1];
+				}
 
 				// Indices
-				this._indices[indOffset] = ptOffset / 3;
-				this._indices[indOffset + 1] = ptOffset / 3 + 1;
-				this._indices[indOffset + 2] = ptOffset / 3 + 2;
+				this._indices[indOffset] = indPtOffset;
+				this._indices[indOffset + 1] = indPtOffset + 1;
+				this._indices[indOffset + 2] = indPtOffset + 2;
 
-				this._indices[indOffset + 3] = ptOffset / 3 + 1;
-				this._indices[indOffset + 4] = ptOffset / 3 + 2;
-				this._indices[indOffset + 5] = ptOffset / 3 + 3;
+				this._indices[indOffset + 3] = indPtOffset + 1;
+				this._indices[indOffset + 4] = indPtOffset + 2;
+				this._indices[indOffset + 5] = indPtOffset + 3;
+
+				for(let i = 0; i < 3; i++) {
+					// Left side
+					this._indices[indOffset + i * 3 + 6] = indPtOffset + i * 2 + 4;
+					this._indices[indOffset + i * 3 + 7] = indPtOffset + i * 2 + 5;
+					this._indices[indOffset + i * 3 + 8] = indPtOffset + i * 2 + 6;
+
+					// Right side
+					this._indices[indOffset + i * 3 + 15] = indPtOffset + i * 2 + 14;
+					this._indices[indOffset + i * 3 + 16] = indPtOffset + i * 2 + 15;
+					this._indices[indOffset + i * 3 + 17] = indPtOffset + i * 2 + 16;
+
+					// Center
+					this._indices[indOffset + i * 6 + 27] = indPtOffset + i * 2 + 4;
+					this._indices[indOffset + i * 6 + 28] = indPtOffset + i * 2 + 6;
+					this._indices[indOffset + i * 6 + 29] = indPtOffset + 20 - i * 2;
+
+					this._indices[indOffset + i * 6 + 30] = indPtOffset + i * 2 + 6;
+					this._indices[indOffset + i * 6 + 31] = indPtOffset + 18 - i * 2;
+					this._indices[indOffset + i * 6 + 32] = indPtOffset + 20 - i * 2;
+				}
+
+				this._indices[indOffset + 24] = indPtOffset + 11;
+				this._indices[indOffset + 25] = indPtOffset + 12;
+				this._indices[indOffset + 26] = indPtOffset + 13;
 
 				// Colors
-				for(let c = 0; c < 4; c++) {
-					this._colors[colOffset + c * 4] = 0.4;
-					this._colors[colOffset + c * 4 + 1] = 0;
-					this._colors[colOffset + c * 4 + 2] = 0;
-					this._colors[colOffset + c * 4 + 3] = 1;
+				for(let i = 0; i < 4; i++) {
+					this._colors[colOffset + i * 4] = 110 / 255;
+					this._colors[colOffset + i * 4 + 1] = 75 / 255;
+					this._colors[colOffset + i * 4 + 2] = 45 / 255;
+					this._colors[colOffset + i * 4 + 3] = 1;
 				}
+
+				for(let i = 4; i < this._pointsPerFace; i++) {
+					this._colors[colOffset + i * 4] = 10 / 255;
+					this._colors[colOffset + i * 4 + 1] = (100 + Math.random() * 30) / 255;
+					this._colors[colOffset + i * 4 + 2] = (50 + Math.random() * 10) / 255;
+					this._colors[colOffset + i * 4 + 3] = 1;
+				}
+
 			}
 		}
 	},
