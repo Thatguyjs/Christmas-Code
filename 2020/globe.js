@@ -115,12 +115,13 @@ const Globe = {
 		// Color buffer
 		for(let i = 0; i < this._pointNum; i++) {
 			const z = this._points[i * 3 + 2];
-			const col = Math.max(z + 1, 0.1);
+			const noise = Ground.noiseAt(this._points[i * 3], this._points[i * 3 + 1]);
+			let col = Math.max(z / 3 + noise / 3 + 0.2, 0.1);
 
 			// Bottom half
-			this._colors[i * 4] = col;
+			this._colors[i * 4] = col * 1.5;
 			this._colors[i * 4 + 1] = col;
-			this._colors[i * 4 + 2] = col;
+			this._colors[i * 4 + 2] = col / 1.2;
 			this._colors[i * 4 + 3] = 1;
 
 			// Top half

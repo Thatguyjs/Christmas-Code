@@ -35,6 +35,8 @@ const Main = {
 
 
 	init: async function() {
+		Renderer.resizeCanvas(window.innerWidth / 2, window.innerHeight);
+
 		await Renderer.createProgram('main', {
 			vertex: '@include/gl/color.vert',
 			fragment: '@include/gl/color.frag',
@@ -70,7 +72,7 @@ const Main = {
 
 
 		// Positions
-		Ground.generate(8, 16);
+		Ground.generate(32, 64);
 
 		// Ground vertices
 		this.groundBuf.points = Gfx.createBuffer(
@@ -118,7 +120,7 @@ const Main = {
 
 
 		// Trees
-		Trees.generate(8, 2, 0.6);
+		Trees.generate(12, 5, 0.6);
 
 		// Tree vertices
 		this.treeBuf.points = Gfx.createBuffer(
@@ -146,7 +148,7 @@ const Main = {
 
 
 		// Globe
-		Globe.generate(8, 16);
+		Globe.generate(32, 64);
 
 		// Globe vertices
 		this.globeBuf.points = Gfx.createBuffer(
@@ -200,7 +202,7 @@ const Main = {
 		mat4.rotate(
 			Renderer.program.matrix.projection,
 			Renderer.program.matrix.projection,
-			0.01,
+			0.008,
 			[0, 0, 1]
 		);
 
