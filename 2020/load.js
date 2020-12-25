@@ -1,6 +1,5 @@
 window.addEventListener('load', async () => {
 	await Renderer.init();
-	await Textures.init();
 
 	await Main.init();
 

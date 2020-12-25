@@ -37,11 +37,14 @@ function input(prompt) {
 
 
 function request(req, res) {
+	if(req.url === '/') {
+		res.writeHead(301, { "Location": '/' + year.toString() });
+		res.end();
+	}
 	if(req.url.slice(-1) !== '/') req.url += '/';
 	if(!req.url.includes('.')) req.url += 'index.html';
 
-	let path = `./${year}${req.url}`;
-	if(path.includes('@include')) path = './' + path.slice(path.indexOf('@include') + 1);
+	let path = '.' + req.url;
 
 	fs.readFile(path, (err, data) => {
 		if(err) {
