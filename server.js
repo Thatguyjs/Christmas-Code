@@ -51,7 +51,7 @@ function request(req, res) {
 		pfs.readFile('./years.html', 'utf8').then(async (data) => {
 			res.end(data.replace(
 				'%years%',
-				(await avail_years()).map(year => `<a href="/${year}">${year}</a>`).join('<br>')
+				(await avail_years()).map(year => `<a href="/${year}/">${year}</a>`).join('<br>')
 			));
 		}).catch((err) => {
 			console.log("Error:", err);
