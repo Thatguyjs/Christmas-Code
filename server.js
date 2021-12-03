@@ -11,6 +11,7 @@ const types = {
 	'html': 'text/html',
 	'css': 'text/css',
 	'js': 'text/javascript',
+	'mjs': 'application/javascript',
 
 	'png': 'image/png',
 	'jpg': 'image/jpeg',
@@ -30,21 +31,17 @@ let year = null;
 
 
 function input(prompt) {
-	return new Promise((res, rej) => {
+	return new Promise((res) => {
 		io.question(prompt, res);
 	});
 }
 
 
 function request(req, res) {
-	if(req.url === '/') {
-		res.writeHead(301, { "Location": '/' + year.toString() });
-		res.end();
-	}
-	if(req.url.slice(-1) !== '/') req.url += '/';
+	if(!req.url.endsWith('/')) req.url += '/';
 	if(!req.url.includes('.')) req.url += 'index.html';
 
-	let path = '.' + req.url;
+	let path = `./${year}${req.url}`;
 
 	fs.readFile(path, (err, data) => {
 		if(err) {
@@ -73,7 +70,7 @@ async function main() {
 		console.log('\nListing possible years:');
 		const blacklist = ['include', '.git'];
 
-		fs.readdir('./', { withFileTypes: true }, (error, files) => {
+		fs.readdir('./', { withFileTypes: true }, (_, files) => {
 			for(let f in files) {
 				if(files[f].isDirectory() && !blacklist.includes(files[f].name)) {
 					console.log(files[f].name);
