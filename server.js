@@ -1,9 +1,11 @@
-const fs = require('fs');
+const pfs = require('fs/promises');
 const http = require('http');
 const readline = require('readline');
 
+process.argv = process.argv.slice(2);
 
-const types = {
+
+const mimes = {
 	'': 'text/plain',
 	'txt': 'text/plain',
 	'json': 'text/json',
@@ -26,9 +28,6 @@ const io = readline.createInterface({
 });
 
 
-let port = NaN;
-let year = null;
-
 
 function input(prompt) {
 	return new Promise((res) => {
@@ -37,48 +36,61 @@ function input(prompt) {
 }
 
 
+async function avail_years() {
+	const dirs = await pfs.readdir('./', { withFileTypes: true });
+	const ignore = ['include', '.git'];
+
+	return dirs.filter(dir => dir.isDirectory() && !ignore.includes(dir.name)).map(dir => dir.name);
+}
+
+
 function request(req, res) {
-	if(!req.url.endsWith('/')) req.url += '/';
-	if(!req.url.includes('.')) req.url += 'index.html';
+	if(req.url === '/') {
+		res.writeHead(200, { 'Content-Type': 'text/html' });
 
-	let path = `./${year}${req.url}`;
+		pfs.readFile('./years.html', 'utf8').then(async (data) => {
+			res.end(data.replace(
+				'%years%',
+				(await avail_years()).map(year => `<a href="/${year}">${year}</a>`).join('<br>')
+			));
+		}).catch((err) => {
+			console.log("Error:", err);
+			res.end("Server Error");
+		});
 
-	fs.readFile(path, (err, data) => {
-		if(err) {
-			res.writeHead(404);
-			res.end("Not found");
-			return;
-		}
+		return;
+	}
 
-		let ext = path.slice(path.lastIndexOf('.') + 1);
-		if(ext.slice(-1) === '/') ext = ext.slice(0, -1);
+	if(!req.url.includes('.')) {
+		if(!req.url.endsWith('/')) req.url += '/';
+		req.url += 'index.html';
+	}
 
-		res.writeHead(200, { "Content-Type": types[ext] || types[''] });
+	const ext = req.url.slice(req.url.lastIndexOf('.') + 1);
+
+	pfs.readFile(`.${req.url}`).then((data) => {
+		if(mimes[ext]) res.writeHead(200, { 'Content-Type': mimes[ext] });
+		else res.writeHead(200);
+
 		res.end(data);
+	}).catch(() => {
+		res.writeHead(404);
+		res.end("File Not Found");
 	});
 }
 
 
 async function main() {
-	while(isNaN(+port)) port = (await input('port: ')) || 80;
-	port = +port;
-	year = (await input('year: ')) || new Date().getFullYear().toString();
-
-	io.close();
-
-	if(year === 'list') {
-		console.log('\nListing possible years:');
-		const blacklist = ['include', '.git'];
-
-		fs.readdir('./', { withFileTypes: true }, (_, files) => {
-			for(let f in files) {
-				if(files[f].isDirectory() && !blacklist.includes(files[f].name)) {
-					console.log(files[f].name);
-				}
-			}
-		});
+	if(['years', 'list'].includes(process.argv[0]?.toLowerCase())) {
+		console.log("Available years:");
+		console.log('  ' + (await avail_years()).join('\n  '));
+		io.close();
 	}
 	else {
+		let port = NaN;
+		while(isNaN(port)) port = +(await input('port: ')) || 80;
+		io.close();
+
 		const server = http.createServer(request);
 		server.listen(port, '127.0.0.1');
 	}

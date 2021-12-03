@@ -38,8 +38,8 @@ const Main = {
 		Renderer.resizeCanvas(window.innerWidth / 2, window.innerHeight);
 
 		await Renderer.createProgram('main', {
-			vertex: '/Christmas-Code/include/gl/color.vert',
-			fragment: '/Christmas-Code/include/gl/color.frag',
+			vertex: location.href + 'include/gl/color.vert',
+			fragment: location.href + 'include/gl/color.frag',
 
 			attributes: {
 				'position': 'aVertexPosition',
