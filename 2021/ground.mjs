@@ -1,35 +1,80 @@
-import { shader_source } from "./shader.mjs";
+import { shader_array } from "./shader.mjs";
 
 
 const Ground = {
 	program: null,
 
-	position: new Float32Array(64 * 3), // 8x8
-	color: new Float32Array(64 * 4), // rgba
+	position: null,
+	color: null,
+	indices: null,
 
-	init(gl, size) {
-		size /= 8;
+	buffers: null,
 
-		this.program = twgl.createProgramInfo(gl, shader_array('shaders/color'));
+	async init(gl, rows, cols, spacing) {
+		this.program = twgl.createProgramInfo(gl, await shader_array('shaders/color'));
 
-		for(let x = 0; x < 8; x++) {
-			for(let z = 0; z < 8; z++) {
-				const ind = x * 3 + z * 12;
-				this.position[ind] = (x - 4) * size;
-				this.position[ind + 1] = 0;
-				this.position[ind + 2] = (z - 4) * size;
+		const center = {
+			x: cols / 2,
+			z: rows / 2
+		};
 
-				const col_ind = x * 4 + z * 16;
-				this.color[col_ind] = Math.random();
-				this.color[col_ind + 1] = Math.random();
-				this.color[col_ind + 2] = Math.random();
-				this.color[col_ind + 3] = 1;
+		this.position = []; // new Float32Array(12 * rows * cols);
+		this.color = []; // new Float32Array(4 * rows * cols);
+		this.indices = [];
+
+		for(let c = 0; c < cols; c++) {
+			for(let r = 0; r < rows; r++) {
+				const t1 = {
+					p1: { x: r - center.x, y: 0.0, z: c - center.z },
+					p2: { x: (r + 1) - center.x, y: 0.0, z: c - center.z },
+					p3: { x: r - center.x, y: 0.0, z: (c + 1) - center.z }
+				};
+
+				const t2 = {
+					p1: { x: (r + 1) - center.x, y: 0.0, z: c - center.z },
+					p2: { x: r - center.x, y: 0.0, z: (c + 1) - center.z },
+					p3: { x: (r + 1) - center.x, y: 0.0, z: (c + 1) - center.z }
+				};
+
+				this.position.push(
+					t1.p1.x, t1.p1.z, t1.p1.y,
+					t1.p2.x, t1.p2.z, t1.p2.y,
+					t1.p3.x, t1.p3.z, t1.p3.y,
+
+					t2.p1.x, t2.p1.z, t2.p1.y,
+					t2.p2.x, t2.p2.z, t2.p2.y,
+					t2.p3.x, t2.p3.z, t2.p3.y
+				);
+
+				this.color.push(
+					Math.random(), Math.random(), Math.random(), 1.0,
+					Math.random(), Math.random(), Math.random(), 1.0,
+					Math.random(), Math.random(), Math.random(), 1.0,
+
+					Math.random(), Math.random(), Math.random(), 1.0,
+					Math.random(), Math.random(), Math.random(), 1.0,
+					Math.random(), Math.random(), Math.random(), 1.0
+				);
 			}
 		}
 	},
 
-	render(gl) {
+	update(gl, x, z) {
+		// TODO: Use x and z as offsets, apply noise
 
+		this.buffers = twgl.createBufferInfoFromArrays(gl, {
+			position: { numComponents: 3, data: this.position },
+			color: { numComponents: 4, data: this.color },
+			// indices: this.indices
+		});
+	},
+
+	render(gl, uniforms) {
+		gl.useProgram(this.program.program);
+		twgl.setUniforms(this.program, uniforms);
+
+		twgl.setBuffersAndAttributes(gl, this.program, this.buffers);
+		twgl.drawBufferInfo(gl, gl.TRIANGLES, this.buffers);
 	}
 };
 
