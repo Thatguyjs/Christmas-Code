@@ -22,6 +22,7 @@ const Ground = {
 		this.color = []; // new Float32Array(4 * rows * cols);
 		this.indices = [];
 
+		/*
 		for(let c = 0; c < cols; c++) {
 			for(let r = 0; r < rows; r++) {
 				const t1 = {
@@ -57,6 +58,48 @@ const Ground = {
 				);
 			}
 		}
+		*/
+
+		this.position = new Float32Array([
+			-0.5,  0.5,  0.5, // Front
+			 0.5,  0.5,  0.5,
+			-0.5,  0.5, -0.5,
+			 0.5,  0.5, -0.5,
+
+			-0.5, -0.5,  0.5, // Back
+			 0.5, -0.5,  0.5,
+			-0.5, -0.5, -0.5,
+			 0.5, -0.5, -0.5
+		]);
+
+		this.color = new Float32Array(8 * 4);
+
+		for(let i = 0; i < this.color.length; i += 4) {
+			this.color[i] = Math.random();
+			this.color[i + 1] = Math.random();
+			this.color[i + 2] = Math.random();
+			this.color[i + 3] = 1;
+		}
+
+		this.indices = [
+			0, 1, 2, // Front
+			1, 2, 3,
+
+			4, 5, 6, // Back
+			5, 6, 7,
+
+			0, 1, 5, // Top
+			0, 4, 5,
+
+			2, 3, 7, // Bottom
+			2, 6, 7,
+
+			0, 2, 6, // Left
+			0, 4, 6,
+
+			1, 3, 7, // Right
+			1, 5, 7
+		];
 	},
 
 	update(gl, x, z) {
@@ -65,7 +108,7 @@ const Ground = {
 		this.buffers = twgl.createBufferInfoFromArrays(gl, {
 			position: { numComponents: 3, data: this.position },
 			color: { numComponents: 4, data: this.color },
-			// indices: this.indices
+			indices: this.indices
 		});
 	},
 
