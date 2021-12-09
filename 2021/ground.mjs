@@ -4,6 +4,10 @@ import { shader_array } from "./shader.mjs";
 const Ground = {
 	program: null,
 
+	rows: 0,
+	cols: 0,
+	height_map: null,
+
 	position: null,
 	color: null,
 	indices: null,
@@ -13,9 +17,13 @@ const Ground = {
 	async init(gl, { rows, cols, spacing, height_func, color_func }) {
 		this.program = twgl.createProgramInfo(gl, await shader_array('shaders/color'));
 
+		this.rows = rows;
+		this.cols = cols;
+		this.height_map = [];
+
 		const center = {
-			x: cols / 2 * spacing,
-			z: rows / 2 * spacing
+			x: rows / 2 * spacing,
+			z: cols / 2 * spacing
 		};
 
 		this.position = []; // new Float32Array(12 * rows * cols);
@@ -28,6 +36,8 @@ const Ground = {
 				const y2 = height_func(r + 1, c);
 				const y3 = height_func(r, c + 1);
 				const y4 = height_func(r + 1, c + 1);
+
+				this.height_map.push(y1);
 
 				const t1 = {
 					p1: { x: r * spacing - center.x, y: y1, z: c * spacing - center.z },
@@ -54,7 +64,7 @@ const Ground = {
 				this.color.push(
 					...color_func(r, c, t1.p1.y),
 					...color_func(r, c, t1.p2.y),
-					...color_func(r, c, t1.p2.y),
+					...color_func(r, c, t1.p3.y),
 
 					...color_func(r, c, t2.p1.y),
 					...color_func(r, c, t2.p2.y),
@@ -62,6 +72,15 @@ const Ground = {
 				);
 			}
 		}
+	},
+
+	// Calculate the height (y) at a given (x, z) position
+	height_at(x, z) {
+		// TODO: Interpolate values & account for the center
+		x = Math.round(x);
+		z = Math.round(z);
+
+		return this.height_map[x + z * this.rows];
 	},
 
 	update(gl, x, z) {
