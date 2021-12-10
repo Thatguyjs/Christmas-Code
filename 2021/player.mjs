@@ -25,6 +25,7 @@ const Player = {
 	RIGHT: 8,
 
 	pos: { x: 0, y: 0, z: 0 },
+	camera_pos: { x: 0, y: 0, z: 0 }, // Loop camera x and z
 	vel: { x: 0, y: 0, z: 0, scale: 0.1, slow: 0.8 },
 	rot: { x: 0, y: 0, scale: 0.1 * Math.PI / 180, min_y: -90 * Math.PI / 180, max_y: 90 * Math.PI / 180 },
 
@@ -70,6 +71,10 @@ const Player = {
 		this.pos.x += this.vel.x * this.vel.scale / mag;
 		this.pos.y += this.vel.y * this.vel.scale;
 		this.pos.z += this.vel.z * this.vel.scale / mag;
+
+		this.camera_pos.x = this.pos.x % 1;
+		this.camera_pos.y = this.pos.y;
+		this.camera_pos.z = this.pos.z % 1;
 
 		this.vel.x *= this.vel.slow;
 		this.vel.z *= this.vel.slow;

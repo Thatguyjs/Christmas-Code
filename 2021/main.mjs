@@ -7,27 +7,28 @@ const gl = canvas.getContext('webgl2');
 
 twgl.resizeCanvasToDisplaySize(canvas);
 
-const uniforms = {
-	world_mat: twgl.m4.identity(),
-	mv_mat: twgl.m4.identity(),
-	proj_mat: twgl.m4.perspective(45 * Math.PI / 180, canvas.width / canvas.height, 0.01, 100)
-};
-
 await Ground.init(gl, {
-	rows: 50,
-	cols: 50,
+	rows: 100,
+	cols: 100,
 	spacing: 0.5,
 	height_func: (row, col) => {
 		return Math.sin(row) * Math.cos(col ^ (row * 10)) * 0.2 + 0.4;
 	},
 	color_func: (row, col, height) => {
 		height = height * 0.4 + 0.7;
-		// return [Math.random() * 0.7, Math.random() * 0.1, Math.random() * 0.4, 1.0];
 		return [height, height, height, 1.0];
 	}
 });
 
 Player.init();
+
+
+const uniforms = {
+	world_mat: twgl.m4.identity(),
+	mv_mat: twgl.m4.identity(),
+	proj_mat: twgl.m4.perspective(45 * Math.PI / 180, canvas.width / canvas.height, 0.01, 100),
+	fog_dist: 25
+};
 
 gl.clearColor(0.01, 0.01, 0.01, 1);
 gl.enable(gl.DEPTH_TEST);
