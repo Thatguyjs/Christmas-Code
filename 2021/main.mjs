@@ -41,12 +41,12 @@ function render() {
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	Player.update();
-	twgl.m4.translation([-Player.pos.z, 2, -Player.pos.x], uniforms.mv_mat);
+	twgl.m4.translation([-Player.camera_pos.z, 2, -Player.camera_pos.x], uniforms.mv_mat);
 	twgl.m4.rotateY(uniforms.mv_mat, Player.rot.x, uniforms.mv_mat);
 	twgl.m4.rotateX(uniforms.mv_mat, Player.rot.y, uniforms.mv_mat);
 	twgl.m4.inverse(uniforms.mv_mat, uniforms.mv_mat);
 
-	Ground.update(gl);
+	Ground.update(gl, -Player.pos.z, -Player.pos.x);
 	Ground.render(gl, uniforms);
 
 	window.requestAnimationFrame(render);

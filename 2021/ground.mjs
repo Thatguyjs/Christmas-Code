@@ -7,6 +7,7 @@ const Ground = {
 	rows: 0,
 	cols: 0,
 	height_map: null,
+	height_func: null,
 
 	position: null,
 	color: null,
@@ -20,6 +21,7 @@ const Ground = {
 		this.rows = rows;
 		this.cols = cols;
 		this.height_map = [];
+		this.height_func = height_func;
 
 		const center = {
 			x: rows / 2 * spacing,
@@ -32,10 +34,10 @@ const Ground = {
 
 		for(let c = 0; c < cols; c++) {
 			for(let r = 0; r < rows; r++) {
-				const y1 = height_func(r, c);
-				const y2 = height_func(r + 1, c);
-				const y3 = height_func(r, c + 1);
-				const y4 = height_func(r + 1, c + 1);
+				const y1 = this.height_func(r, c);
+				const y2 = this.height_func(r + 1, c);
+				const y3 = this.height_func(r, c + 1);
+				const y4 = this.height_func(r + 1, c + 1);
 
 				this.height_map.push(y1);
 
@@ -83,8 +85,32 @@ const Ground = {
 		return this.height_map[x + z * this.rows];
 	},
 
+	move_by(x, z) {
+
+	},
+
 	update(gl, x, z) {
 		// TODO: Use x and z as offsets, apply noise
+
+		// TODO: Update the heightmap
+		for(let c = 0; c < this.cols; c++) {
+			for(let r = 0; r < this.rows; r++) {
+				const y1 = this.height_func(r + x, c + z);
+				const y2 = this.height_func(r + x + 1, c + z);
+				const y3 = this.height_func(r + x, c + z + 1);
+				const y4 = this.height_func(r + x + 1, c + z + 1);
+
+				const ind = r * 18 + c * this.rows * 18;
+
+				this.position[ind + 1] = y1;
+				this.position[ind + 4] = y2;
+				this.position[ind + 7] = y3;
+
+				this.position[ind + 10] = y2;
+				this.position[ind + 13] = y3;
+				this.position[ind + 16] = y4;
+			}
+		}
 
 		this.buffers = twgl.createBufferInfoFromArrays(gl, {
 			position: { numComponents: 3, data: this.position },
