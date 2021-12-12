@@ -89,7 +89,7 @@ const Ground = {
 
 	},
 
-	update(gl, x, z) {
+	update(gl, x, z, vx, vz) {
 		// TODO: Use x and z as offsets, apply noise
 
 		// TODO: Update the heightmap
@@ -109,6 +109,25 @@ const Ground = {
 				this.position[ind + 10] = y2;
 				this.position[ind + 13] = y3;
 				this.position[ind + 16] = y4;
+
+				// x and z
+				this.position[ind] = (this.position[ind] + vx) % 20;
+				this.position[ind + 2] = (this.position[ind + 2] + vz) % 20;
+
+				this.position[ind + 3] = (this.position[ind + 3] + vx) % 20;
+				this.position[ind + 5] = (this.position[ind + 5] + vz) % 20;
+
+				this.position[ind + 6] = (this.position[ind + 6] + vx) % 20;
+				this.position[ind + 8] = (this.position[ind + 8] + vz) % 20;
+
+				this.position[ind + 9] = (this.position[ind + 9] + vx) % 20;
+				this.position[ind + 11] = (this.position[ind + 11] + vz) % 20;
+
+				this.position[ind + 12] = (this.position[ind + 12] + vx) % 20;
+				this.position[ind + 14] = (this.position[ind + 14] + vz) % 20;
+
+				this.position[ind + 15] = (this.position[ind + 15] + vx) % 20;
+				this.position[ind + 17] = (this.position[ind + 17] + vz) % 20;
 			}
 		}
 
