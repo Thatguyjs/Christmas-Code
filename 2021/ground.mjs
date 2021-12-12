@@ -6,12 +6,13 @@ const Ground = {
 
 	rows: 0,
 	cols: 0,
-	height_map: null,
+	spacing: 0,
 	height_func: null,
+	color_func: null,
 
-	position: null,
-	color: null,
-	indices: null,
+	chunks: [],
+	batch_pos: { length: 0, data: null },
+	batch_color: { length: 0, data: null },
 
 	buffers: null,
 
@@ -20,40 +21,46 @@ const Ground = {
 
 		this.rows = rows;
 		this.cols = cols;
-		this.height_map = [];
+		this.spacing = spacing;
 		this.height_func = height_func;
+		this.color_func = color_func;
 
-		const center = {
-			x: rows / 2 * spacing,
-			z: cols / 2 * spacing
+		this.gen_chunk(0, 0);
+		this.batch();
+		this.buffer(gl);
+	},
+
+	gen_chunk(x, z) {
+		const offset = {
+			x: this.rows / 2 * this.spacing + x * this.rows * this.spacing,
+			z: this.cols / 2 * this.spacing + z * this.cols * this.spacing
 		};
 
-		this.position = []; // new Float32Array(12 * rows * cols);
-		this.color = []; // new Float32Array(4 * rows * cols);
-		this.indices = [];
+		let chunk = { position: [], color: [] };
 
-		for(let c = 0; c < cols; c++) {
-			for(let r = 0; r < rows; r++) {
-				const y1 = this.height_func(r, c);
-				const y2 = this.height_func(r + 1, c);
-				const y3 = this.height_func(r, c + 1);
-				const y4 = this.height_func(r + 1, c + 1);
+		for(let c = 0; c < this.cols; c++) {
+			for(let r = 0; r < this.rows; r++) {
+				const r_s = r * this.spacing;
+				const c_s = c * this.spacing;
 
-				this.height_map.push(y1);
+				const y1 = this.height_func(r_s - offset.x,                c_s - offset.z);
+				const y2 = this.height_func(r_s - offset.x + this.spacing, c_s - offset.z);
+				const y3 = this.height_func(r_s - offset.x,                c_s - offset.z + this.spacing);
+				const y4 = this.height_func(r_s - offset.x + this.spacing, c_s - offset.z + this.spacing);
 
 				const t1 = {
-					p1: { x: r * spacing - center.x, y: y1, z: c * spacing - center.z },
-					p2: { x: (r + 1) * spacing - center.x, y: y2, z: c * spacing - center.z },
-					p3: { x: r * spacing - center.x, y: y3, z: (c + 1) * spacing - center.z }
+					p1: { x: r * this.spacing - offset.x, y: y1, z: c * this.spacing - offset.z },
+					p2: { x: (r + 1) * this.spacing - offset.x, y: y2, z: c * this.spacing - offset.z },
+					p3: { x: r * this.spacing - offset.x, y: y3, z: (c + 1) * this.spacing - offset.z }
 				};
 
 				const t2 = {
-					p1: { x: (r + 1) * spacing - center.x, y: y2, z: c * spacing - center.z },
-					p2: { x: r * spacing - center.x, y: y3, z: (c + 1) * spacing - center.z },
-					p3: { x: (r + 1) * spacing - center.x, y: y4, z: (c + 1) * spacing - center.z }
+					p1: { x: (r + 1) * this.spacing - offset.x, y: y2, z: c * this.spacing - offset.z },
+					p2: { x: r * this.spacing - offset.x, y: y3, z: (c + 1) * this.spacing - offset.z },
+					p3: { x: (r + 1) * this.spacing - offset.x, y: y4, z: (c + 1) * this.spacing - offset.z }
 				};
 
-				this.position.push(
+				chunk.position.push(
 					t1.p1.x, t1.p1.y, t1.p1.z,
 					t1.p2.x, t1.p2.y, t1.p2.z,
 					t1.p3.x, t1.p3.y, t1.p3.z,
@@ -63,77 +70,57 @@ const Ground = {
 					t2.p3.x, t2.p3.y, t2.p3.z
 				);
 
-				this.color.push(
-					...color_func(r, c, t1.p1.y),
-					...color_func(r, c, t1.p2.y),
-					...color_func(r, c, t1.p3.y),
+				chunk.color.push(
+					...this.color_func(r, c, t1.p1.y),
+					...this.color_func(r, c, t1.p2.y),
+					...this.color_func(r, c, t1.p3.y),
 
-					...color_func(r, c, t2.p1.y),
-					...color_func(r, c, t2.p2.y),
-					...color_func(r, c, t2.p3.y)
+					...this.color_func(r, c, t2.p1.y),
+					...this.color_func(r, c, t2.p2.y),
+					...this.color_func(r, c, t2.p3.y)
 				);
 			}
 		}
+
+		this.batch_pos.length += chunk.position.length;
+		this.batch_color.length += chunk.color.length;
+		this.chunks.push(chunk);
 	},
 
-	// Calculate the height (y) at a given (x, z) position
-	height_at(x, z) {
-		// TODO: Interpolate values & account for the center
-		x = Math.round(x);
-		z = Math.round(z);
+	remove_chunk(index) {
+		if(index < 0 || index >= this.chunks.length)
+			throw new RangeError(`Invalid chunk index: ${index}`);
 
-		return this.height_map[x + z * this.rows];
+		this.batch_pos.length -= this.chunks[index].position.length;
+		this.batch_color.length -= this.chunks[index].color.length;
+		this.chunks[index] = null;
 	},
 
-	move_by(x, z) {
+	// Batch chunks
+	batch() {
+		this.batch_pos.data = new Float32Array(this.batch_pos.length);
+		this.batch_color.data = new Float32Array(this.batch_color.length);
 
-	},
+		let pos_offset = 0;
+		let col_offset = 0;
 
-	update(gl, x, z, vx, vz) {
-		// TODO: Use x and z as offsets, apply noise
+		for(let c in this.chunks) {
+			if(this.chunks[c] === null) continue;
 
-		// TODO: Update the heightmap
-		for(let c = 0; c < this.cols; c++) {
-			for(let r = 0; r < this.rows; r++) {
-				const y1 = this.height_func(r + x, c + z);
-				const y2 = this.height_func(r + x + 1, c + z);
-				const y3 = this.height_func(r + x, c + z + 1);
-				const y4 = this.height_func(r + x + 1, c + z + 1);
+			this.batch_pos.data.set(this.chunks[c].position, pos_offset);
+			this.batch_color.data.set(this.chunks[c].color, col_offset);
 
-				const ind = r * 18 + c * this.rows * 18;
-
-				this.position[ind + 1] = y1;
-				this.position[ind + 4] = y2;
-				this.position[ind + 7] = y3;
-
-				this.position[ind + 10] = y2;
-				this.position[ind + 13] = y3;
-				this.position[ind + 16] = y4;
-
-				// x and z
-				this.position[ind] = (this.position[ind] + vx) % 20;
-				this.position[ind + 2] = (this.position[ind + 2] + vz) % 20;
-
-				this.position[ind + 3] = (this.position[ind + 3] + vx) % 20;
-				this.position[ind + 5] = (this.position[ind + 5] + vz) % 20;
-
-				this.position[ind + 6] = (this.position[ind + 6] + vx) % 20;
-				this.position[ind + 8] = (this.position[ind + 8] + vz) % 20;
-
-				this.position[ind + 9] = (this.position[ind + 9] + vx) % 20;
-				this.position[ind + 11] = (this.position[ind + 11] + vz) % 20;
-
-				this.position[ind + 12] = (this.position[ind + 12] + vx) % 20;
-				this.position[ind + 14] = (this.position[ind + 14] + vz) % 20;
-
-				this.position[ind + 15] = (this.position[ind + 15] + vx) % 20;
-				this.position[ind + 17] = (this.position[ind + 17] + vz) % 20;
-			}
+			pos_offset += this.chunks[c].position.length;
+			col_offset += this.chunks[c].color.length;
 		}
+	},
 
+	// Generate buffers
+	buffer(gl) {
+		// TODO: Use x and z as offsets, apply noise
 		this.buffers = twgl.createBufferInfoFromArrays(gl, {
-			position: { numComponents: 3, data: this.position },
-			color: { numComponents: 4, data: this.color },
+			position: { numComponents: 3, data: this.batch_pos.data },
+			color: { numComponents: 4, data: this.batch_color.data },
 			// indices: this.indices
 		});
 	},

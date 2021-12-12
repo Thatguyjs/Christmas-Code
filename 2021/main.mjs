@@ -11,10 +11,10 @@ await Ground.init(gl, {
 	rows: 100,
 	cols: 100,
 	spacing: 0.5,
-	height_func: (row, col) => {
-		return Math.sin(row) * Math.cos(col ^ (row * 10)) * 0.2 + 0.4;
+	height_func: (x, z) => {
+		return Math.sin(x ^ (z * 10)) * Math.cos(z ^ (x * 10)) * 0.2 + 0.4;
 	},
-	color_func: (row, col, height) => {
+	color_func: (x, z, height) => {
 		height = height * 0.4 + 0.7;
 		return [height, height, height, 1.0];
 	}
@@ -41,13 +41,11 @@ function render() {
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	Player.update();
-	twgl.m4.translation([0, 2, 0], uniforms.mv_mat);
-	// twgl.m4.translation([-Player.camera_pos.z, 2, -Player.camera_pos.x], uniforms.mv_mat);
+	twgl.m4.translation([-Player.pos.z, 2, -Player.pos.x], uniforms.mv_mat);
 	twgl.m4.rotateY(uniforms.mv_mat, Player.rot.x, uniforms.mv_mat);
 	twgl.m4.rotateX(uniforms.mv_mat, Player.rot.y, uniforms.mv_mat);
 	twgl.m4.inverse(uniforms.mv_mat, uniforms.mv_mat);
 
-	Ground.update(gl, Player.pos.z, Player.pos.x, Player.vel.z * Player.vel.scale, Player.vel.x * Player.vel.scale);
 	Ground.render(gl, uniforms);
 
 	window.requestAnimationFrame(render);
