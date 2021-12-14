@@ -49,15 +49,15 @@ const Ground = {
 				const y4 = this.height_func(r_s - offset.x + this.spacing, c_s - offset.z + this.spacing);
 
 				const t1 = {
-					p1: { x: r * this.spacing - offset.x, y: y1, z: c * this.spacing - offset.z },
-					p2: { x: (r + 1) * this.spacing - offset.x, y: y2, z: c * this.spacing - offset.z },
-					p3: { x: r * this.spacing - offset.x, y: y3, z: (c + 1) * this.spacing - offset.z }
+					p1: { x: r_s - offset.x,                y: y1, z: c_s - offset.z },
+					p2: { x: r_s - offset.x + this.spacing, y: y2, z: c_s - offset.z },
+					p3: { x: r_s - offset.x,                y: y3, z: c_s - offset.z + this.spacing }
 				};
 
 				const t2 = {
-					p1: { x: (r + 1) * this.spacing - offset.x, y: y2, z: c * this.spacing - offset.z },
-					p2: { x: r * this.spacing - offset.x, y: y3, z: (c + 1) * this.spacing - offset.z },
-					p3: { x: (r + 1) * this.spacing - offset.x, y: y4, z: (c + 1) * this.spacing - offset.z }
+					p1: { x: r_s - offset.x + this.spacing, y: y2, z: c_s - offset.z },
+					p2: { x: r_s - offset.x,                y: y3, z: c_s - offset.z + this.spacing },
+					p3: { x: r_s - offset.x + this.spacing, y: y4, z: c_s - offset.z + this.spacing }
 				};
 
 				chunk.position.push(
