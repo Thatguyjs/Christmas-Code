@@ -46,6 +46,7 @@ function render() {
 	twgl.m4.rotateX(uniforms.mv_mat, Player.rot.y, uniforms.mv_mat);
 	twgl.m4.inverse(uniforms.mv_mat, uniforms.mv_mat);
 
+	Ground.update_chunks(gl, Player);
 	Ground.render(gl, uniforms);
 
 	window.requestAnimationFrame(render);

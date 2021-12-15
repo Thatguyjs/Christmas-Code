@@ -43,7 +43,7 @@ const Player = {
 		});
 
 		window.addEventListener('mousemove', (ev) => {
-			this.rot.x -= ev.movementX * this.rot.scale;
+			this.rot.x = (this.rot.x - ev.movementX * this.rot.scale) % (Math.PI * 2);
 			this.rot.y -= ev.movementY * this.rot.scale;
 			this.rot.y = constrain(this.rot.y, this.rot.min_y, this.rot.max_y);
 		});

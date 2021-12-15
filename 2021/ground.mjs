@@ -14,6 +14,9 @@ const Ground = {
 	batch_pos: { length: 0, data: null },
 	batch_color: { length: 0, data: null },
 
+	player_chunk: { x: 0, z: 0 },
+	last_player_chunk: { x: 0, z: 0 },
+
 	buffers: null,
 
 	async init(gl, { rows, cols, spacing, height_func, color_func }) {
@@ -30,55 +33,94 @@ const Ground = {
 		this.buffer(gl);
 	},
 
-	gen_chunk(x, z) {
+	async gen_chunk(x, z) {
 		const offset = {
 			x: this.rows / 2 * this.spacing + x * this.rows * this.spacing,
 			z: this.cols / 2 * this.spacing + z * this.cols * this.spacing
 		};
 
-		let chunk = { position: [], color: [] };
+		let chunk = {
+			x, z,
+			position: new Float32Array(this.rows * this.cols * 18),
+			color: new Float32Array(this.rows * this.cols * 24)
+		};
 
 		for(let c = 0; c < this.cols; c++) {
 			for(let r = 0; r < this.rows; r++) {
-				const r_s = r * this.spacing;
-				const c_s = c * this.spacing;
+				const r_s = r * this.spacing - offset.x;
+				const c_s = c * this.spacing - offset.z;
 
-				const y1 = this.height_func(r_s - offset.x,                c_s - offset.z);
-				const y2 = this.height_func(r_s - offset.x + this.spacing, c_s - offset.z);
-				const y3 = this.height_func(r_s - offset.x,                c_s - offset.z + this.spacing);
-				const y4 = this.height_func(r_s - offset.x + this.spacing, c_s - offset.z + this.spacing);
+				const y1 = this.height_func(r_s,                c_s);
+				const y2 = this.height_func(r_s + this.spacing, c_s);
+				const y3 = this.height_func(r_s,                c_s + this.spacing);
+				const y4 = this.height_func(r_s + this.spacing, c_s + this.spacing);
 
-				const t1 = {
-					p1: { x: r_s - offset.x,                y: y1, z: c_s - offset.z },
-					p2: { x: r_s - offset.x + this.spacing, y: y2, z: c_s - offset.z },
-					p3: { x: r_s - offset.x,                y: y3, z: c_s - offset.z + this.spacing }
-				};
+				const p1 = { x: r_s,                z: c_s };
+				const p2 = { x: r_s + this.spacing, z: c_s };
+				const p3 = { x: r_s,                z: c_s + this.spacing };
+				const p4 = { x: r_s + this.spacing, z: c_s + this.spacing };
 
-				const t2 = {
-					p1: { x: r_s - offset.x + this.spacing, y: y2, z: c_s - offset.z },
-					p2: { x: r_s - offset.x,                y: y3, z: c_s - offset.z + this.spacing },
-					p3: { x: r_s - offset.x + this.spacing, y: y4, z: c_s - offset.z + this.spacing }
-				};
+				const pos_ind = r * 18 + c * this.rows * 18;
 
-				chunk.position.push(
-					t1.p1.x, t1.p1.y, t1.p1.z,
-					t1.p2.x, t1.p2.y, t1.p2.z,
-					t1.p3.x, t1.p3.y, t1.p3.z,
+				chunk.position[pos_ind] = p1.x;
+				chunk.position[pos_ind + 1] = y1;
+				chunk.position[pos_ind + 2] = p1.z;
+				chunk.position[pos_ind + 3] = p2.x;
+				chunk.position[pos_ind + 4] = y2;
+				chunk.position[pos_ind + 5] = p2.z;
+				chunk.position[pos_ind + 6] = p3.x;
+				chunk.position[pos_ind + 7] = y3;
+				chunk.position[pos_ind + 8] = p3.z;
 
-					t2.p1.x, t2.p1.y, t2.p1.z,
-					t2.p2.x, t2.p2.y, t2.p2.z,
-					t2.p3.x, t2.p3.y, t2.p3.z
-				);
+				chunk.position[pos_ind + 9] = p2.x;
+				chunk.position[pos_ind + 10] = y2;
+				chunk.position[pos_ind + 11] = p2.z;
+				chunk.position[pos_ind + 12] = p3.x;
+				chunk.position[pos_ind + 13] = y3;
+				chunk.position[pos_ind + 14] = p3.z;
+				chunk.position[pos_ind + 15] = p4.x;
+				chunk.position[pos_ind + 16] = y4;
+				chunk.position[pos_ind + 17] = p4.z;
 
-				chunk.color.push(
-					...this.color_func(r, c, t1.p1.y),
-					...this.color_func(r, c, t1.p2.y),
-					...this.color_func(r, c, t1.p3.y),
+				const c1 = this.color_func(r, c, y1);
+				const c2 = this.color_func(r, c, y2);
+				const c3 = this.color_func(r, c, y3);
 
-					...this.color_func(r, c, t2.p1.y),
-					...this.color_func(r, c, t2.p2.y),
-					...this.color_func(r, c, t2.p3.y)
-				);
+				const c4 = this.color_func(r, c, y2);
+				const c5 = this.color_func(r, c, y3);
+				const c6 = this.color_func(r, c, y4);
+
+				const col_ind = r * 24 + c * this.rows * 24;
+
+				chunk.color[col_ind] = c1[0];
+				chunk.color[col_ind + 1] = c1[1];
+				chunk.color[col_ind + 2] = c1[2];
+				chunk.color[col_ind + 3] = c1[3];
+
+				chunk.color[col_ind + 4] = c2[0];
+				chunk.color[col_ind + 5] = c2[1];
+				chunk.color[col_ind + 6] = c2[2];
+				chunk.color[col_ind + 7] = c2[3];
+
+				chunk.color[col_ind + 8] = c3[0];
+				chunk.color[col_ind + 9] = c3[1];
+				chunk.color[col_ind + 10] = c3[2];
+				chunk.color[col_ind + 11] = c3[3];
+
+				chunk.color[col_ind + 12] = c4[0];
+				chunk.color[col_ind + 13] = c4[1];
+				chunk.color[col_ind + 14] = c4[2];
+				chunk.color[col_ind + 15] = c4[3];
+
+				chunk.color[col_ind + 16] = c5[0];
+				chunk.color[col_ind + 17] = c5[1];
+				chunk.color[col_ind + 18] = c5[2];
+				chunk.color[col_ind + 19] = c5[3];
+
+				chunk.color[col_ind + 20] = c6[0];
+				chunk.color[col_ind + 21] = c6[1];
+				chunk.color[col_ind + 22] = c6[2];
+				chunk.color[col_ind + 23] = c6[3];
 			}
 		}
 
@@ -94,6 +136,13 @@ const Ground = {
 		this.batch_pos.length -= this.chunks[index].position.length;
 		this.batch_color.length -= this.chunks[index].color.length;
 		this.chunks[index] = null;
+	},
+
+	clear_chunks() {
+		let ind = this.chunks.length;
+
+		while(--ind >= 0)
+			this.chunks.pop();
 	},
 
 	// Batch chunks
@@ -123,6 +172,35 @@ const Ground = {
 			color: { numComponents: 4, data: this.batch_color.data },
 			// indices: this.indices
 		});
+	},
+
+	// Update which chunks are shown around the player
+	update_chunks(gl, player) {
+		this.player_chunk = {
+			x: Math.round(player.pos.z / (this.rows * this.spacing)),
+			z: Math.round(player.pos.x / (this.cols * this.spacing))
+		};
+
+		if(this.player_chunk.x !== this.last_player_chunk.x || this.player_chunk.z !== this.last_player_chunk.z) {
+			console.time('ChunkGen');
+			// this.clear_chunks();
+
+			let is_available = true;
+
+			for(let c in this.chunks)
+				if(this.chunks[c].x === this.player_chunk.x && this.chunks[c].z === this.player_chunk.z)
+					is_available = false;
+
+			if(is_available) {
+				this.gen_chunk(this.player_chunk.x, this.player_chunk.z);
+				this.batch();
+				this.buffer(gl);
+			}
+			console.timeEnd('ChunkGen');
+		}
+
+		this.last_player_chunk.x = this.player_chunk.x;
+		this.last_player_chunk.z = this.player_chunk.z;
 	},
 
 	render(gl, uniforms) {
