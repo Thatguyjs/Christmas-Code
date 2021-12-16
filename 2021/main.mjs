@@ -8,8 +8,8 @@ const gl = canvas.getContext('webgl2');
 twgl.resizeCanvasToDisplaySize(canvas);
 
 await Ground.init(gl, {
-	rows: 100,
-	cols: 100,
+	rows: 50,
+	cols: 50,
 	spacing: 0.5,
 	height_func: (x, z) => {
 		return Math.sin(x ^ (z * 10)) * Math.cos(z ^ (x * 10)) * 0.2 + 0.4;
@@ -26,7 +26,7 @@ Player.init();
 const uniforms = {
 	world_mat: twgl.m4.identity(),
 	mv_mat: twgl.m4.identity(),
-	proj_mat: twgl.m4.perspective(45 * Math.PI / 180, canvas.width / canvas.height, 0.01, 100),
+	proj_mat: twgl.m4.perspective(65 * Math.PI / 180, canvas.width / canvas.height, 0.01, 100),
 	fog_dist: 25
 };
 
