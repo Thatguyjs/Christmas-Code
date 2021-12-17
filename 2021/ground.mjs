@@ -1,6 +1,11 @@
 import { shader_array } from "./shader.mjs";
 
 
+function dist_plane(o1, o2) {
+	return Math.sqrt((o1.x - o2.x) ** 2 + (o1.z - o2.z) ** 2);
+}
+
+
 const Ground = {
 	program: null,
 
@@ -10,16 +15,18 @@ const Ground = {
 	height_func: null,
 	color_func: null,
 
-	chunks: [],
-	batch_pos: { length: 0, data: null },
-	batch_color: { length: 0, data: null },
+	chunk_data: { position: null, color: null },
+	chunk_positions: { x: [], z: [], length: 0 },
+	avail_chunks: [],
+	chunk_order: [],
+	chunk_pool_size: 0,
 
 	player_chunk: { x: 0, z: 0 },
 	last_player_chunk: { x: 0, z: 0 },
 
 	buffers: null,
 
-	async init(gl, { rows, cols, spacing, height_func, color_func }) {
+	async init(gl, { rows, cols, spacing, chunk_pool_size, height_func, color_func }) {
 		this.program = twgl.createProgramInfo(gl, await shader_array('shaders/color'));
 
 		this.rows = rows;
@@ -28,22 +35,35 @@ const Ground = {
 		this.height_func = height_func;
 		this.color_func = color_func;
 
+		this.chunk_pool_size = chunk_pool_size;
+		this.chunk_data.position = new Float32Array(18 * rows * cols * this.chunk_pool_size);
+		this.chunk_data.color = new Float32Array(24 * rows * cols * this.chunk_pool_size);
+
+		for(let i = 0; i < chunk_pool_size; i++)
+			this.avail_chunks.push(i);
+
 		this.gen_chunk(0, 0);
-		this.batch();
 		this.buffer(gl);
 	},
 
-	async gen_chunk(x, z) {
+	gen_chunk(x, z) {
+		// Make sure the chunk isn't already generated
+		for(let c = 0; c < this.chunk_positions.length; c++)
+			if(this.chunk_positions.x[c] === x && this.chunk_positions.z[c] === z)
+				return;
+
+		// Remove the last generated chunk if we've reached the limit
+		if(this.avail_chunks.length === 0)
+			return;
+
 		const offset = {
 			x: this.rows / 2 * this.spacing + x * this.rows * this.spacing,
 			z: this.cols / 2 * this.spacing + z * this.cols * this.spacing
 		};
 
-		let chunk = {
-			x, z,
-			position: new Float32Array(this.rows * this.cols * 18),
-			color: new Float32Array(this.rows * this.cols * 24)
-		};
+		let avail_chunk = this.avail_chunks.shift();
+		const start_pos = avail_chunk * 18 * this.rows * this.cols;
+		const start_col = avail_chunk * 24 * this.rows * this.cols;
 
 		for(let c = 0; c < this.cols; c++) {
 			for(let r = 0; r < this.rows; r++) {
@@ -60,27 +80,27 @@ const Ground = {
 				const p3 = { x: r_s,                z: c_s + this.spacing };
 				const p4 = { x: r_s + this.spacing, z: c_s + this.spacing };
 
-				const pos_ind = r * 18 + c * this.rows * 18;
+				const pos_ind = start_pos + r * 18 + c * this.rows * 18;
 
-				chunk.position[pos_ind] = p1.x;
-				chunk.position[pos_ind + 1] = y1;
-				chunk.position[pos_ind + 2] = p1.z;
-				chunk.position[pos_ind + 3] = p2.x;
-				chunk.position[pos_ind + 4] = y2;
-				chunk.position[pos_ind + 5] = p2.z;
-				chunk.position[pos_ind + 6] = p3.x;
-				chunk.position[pos_ind + 7] = y3;
-				chunk.position[pos_ind + 8] = p3.z;
+				this.chunk_data.position[pos_ind] = p1.x;
+				this.chunk_data.position[pos_ind + 1] = y1;
+				this.chunk_data.position[pos_ind + 2] = p1.z;
+				this.chunk_data.position[pos_ind + 3] = p2.x;
+				this.chunk_data.position[pos_ind + 4] = y2;
+				this.chunk_data.position[pos_ind + 5] = p2.z;
+				this.chunk_data.position[pos_ind + 6] = p3.x;
+				this.chunk_data.position[pos_ind + 7] = y3;
+				this.chunk_data.position[pos_ind + 8] = p3.z;
 
-				chunk.position[pos_ind + 9] = p2.x;
-				chunk.position[pos_ind + 10] = y2;
-				chunk.position[pos_ind + 11] = p2.z;
-				chunk.position[pos_ind + 12] = p3.x;
-				chunk.position[pos_ind + 13] = y3;
-				chunk.position[pos_ind + 14] = p3.z;
-				chunk.position[pos_ind + 15] = p4.x;
-				chunk.position[pos_ind + 16] = y4;
-				chunk.position[pos_ind + 17] = p4.z;
+				this.chunk_data.position[pos_ind + 9] = p2.x;
+				this.chunk_data.position[pos_ind + 10] = y2;
+				this.chunk_data.position[pos_ind + 11] = p2.z;
+				this.chunk_data.position[pos_ind + 12] = p3.x;
+				this.chunk_data.position[pos_ind + 13] = y3;
+				this.chunk_data.position[pos_ind + 14] = p3.z;
+				this.chunk_data.position[pos_ind + 15] = p4.x;
+				this.chunk_data.position[pos_ind + 16] = y4;
+				this.chunk_data.position[pos_ind + 17] = p4.z;
 
 				const c1 = this.color_func(r, c, y1);
 				const c2 = this.color_func(r, c, y2);
@@ -90,86 +110,91 @@ const Ground = {
 				const c5 = this.color_func(r, c, y3);
 				const c6 = this.color_func(r, c, y4);
 
-				const col_ind = r * 24 + c * this.rows * 24;
+				const col_ind = start_col + r * 24 + c * this.rows * 24;
 
-				chunk.color[col_ind] = c1[0];
-				chunk.color[col_ind + 1] = c1[1];
-				chunk.color[col_ind + 2] = c1[2];
-				chunk.color[col_ind + 3] = c1[3];
+				this.chunk_data.color[col_ind] = c1[0];
+				this.chunk_data.color[col_ind + 1] = c1[1];
+				this.chunk_data.color[col_ind + 2] = c1[2];
+				this.chunk_data.color[col_ind + 3] = c1[3];
 
-				chunk.color[col_ind + 4] = c2[0];
-				chunk.color[col_ind + 5] = c2[1];
-				chunk.color[col_ind + 6] = c2[2];
-				chunk.color[col_ind + 7] = c2[3];
+				this.chunk_data.color[col_ind + 4] = c2[0];
+				this.chunk_data.color[col_ind + 5] = c2[1];
+				this.chunk_data.color[col_ind + 6] = c2[2];
+				this.chunk_data.color[col_ind + 7] = c2[3];
 
-				chunk.color[col_ind + 8] = c3[0];
-				chunk.color[col_ind + 9] = c3[1];
-				chunk.color[col_ind + 10] = c3[2];
-				chunk.color[col_ind + 11] = c3[3];
+				this.chunk_data.color[col_ind + 8] = c3[0];
+				this.chunk_data.color[col_ind + 9] = c3[1];
+				this.chunk_data.color[col_ind + 10] = c3[2];
+				this.chunk_data.color[col_ind + 11] = c3[3];
 
-				chunk.color[col_ind + 12] = c4[0];
-				chunk.color[col_ind + 13] = c4[1];
-				chunk.color[col_ind + 14] = c4[2];
-				chunk.color[col_ind + 15] = c4[3];
+				this.chunk_data.color[col_ind + 12] = c4[0];
+				this.chunk_data.color[col_ind + 13] = c4[1];
+				this.chunk_data.color[col_ind + 14] = c4[2];
+				this.chunk_data.color[col_ind + 15] = c4[3];
 
-				chunk.color[col_ind + 16] = c5[0];
-				chunk.color[col_ind + 17] = c5[1];
-				chunk.color[col_ind + 18] = c5[2];
-				chunk.color[col_ind + 19] = c5[3];
+				this.chunk_data.color[col_ind + 16] = c5[0];
+				this.chunk_data.color[col_ind + 17] = c5[1];
+				this.chunk_data.color[col_ind + 18] = c5[2];
+				this.chunk_data.color[col_ind + 19] = c5[3];
 
-				chunk.color[col_ind + 20] = c6[0];
-				chunk.color[col_ind + 21] = c6[1];
-				chunk.color[col_ind + 22] = c6[2];
-				chunk.color[col_ind + 23] = c6[3];
+				this.chunk_data.color[col_ind + 20] = c6[0];
+				this.chunk_data.color[col_ind + 21] = c6[1];
+				this.chunk_data.color[col_ind + 22] = c6[2];
+				this.chunk_data.color[col_ind + 23] = c6[3];
 			}
 		}
 
-		this.batch_pos.length += chunk.position.length;
-		this.batch_color.length += chunk.color.length;
-		this.chunks.push(chunk);
+		this.chunk_order.push(avail_chunk);
+
+		this.chunk_positions.x.push(x);
+		this.chunk_positions.z.push(z);
+		this.chunk_positions.length++;
 	},
 
-	remove_chunk(index) {
-		if(index < 0 || index >= this.chunks.length)
-			throw new RangeError(`Invalid chunk index: ${index}`);
+	remove_last_chunk() {
+		if(this.chunk_order.length === 0) return;
+		this.avail_chunks.push(this.chunk_order.shift());
 
-		this.batch_pos.length -= this.chunks[index].position.length;
-		this.batch_color.length -= this.chunks[index].color.length;
-		this.chunks[index] = null;
+		this.chunk_positions.x.shift();
+		this.chunk_positions.z.shift();
+		this.chunk_positions.length--;
 	},
 
-	clear_chunks() {
-		let ind = this.chunks.length;
+	remove_furthest_chunk(player) {
+		if(this.chunk_order.length === 0) return;
 
-		while(--ind >= 0)
-			this.chunks.pop();
-	},
+		let furthest = {
+			index: 0,
+			distance: 0
+		};
 
-	// Batch chunks
-	batch() {
-		this.batch_pos.data = new Float32Array(this.batch_pos.length);
-		this.batch_color.data = new Float32Array(this.batch_color.length);
+		for(let i = 0; i < this.chunk_positions.length; i++) {
+			const chunk_dist = dist_plane({
+				x: this.chunk_positions.x[i],
+				z: this.chunk_positions.z[i]
+			}, {
+				x: player.pos.z / (this.rows * this.spacing),
+				z: player.pos.x / (this.cols * this.spacing)
+			});
 
-		let pos_offset = 0;
-		let col_offset = 0;
-
-		for(let c in this.chunks) {
-			if(this.chunks[c] === null) continue;
-
-			this.batch_pos.data.set(this.chunks[c].position, pos_offset);
-			this.batch_color.data.set(this.chunks[c].color, col_offset);
-
-			pos_offset += this.chunks[c].position.length;
-			col_offset += this.chunks[c].color.length;
+			if(chunk_dist > furthest.distance) {
+				furthest.index = i;
+				furthest.distance = chunk_dist;
+			}
 		}
+
+		this.avail_chunks.push(this.chunk_order.splice(furthest.index, 1)[0]);
+
+		this.chunk_positions.x.splice(furthest.index, 1);
+		this.chunk_positions.z.splice(furthest.index, 1);
+		this.chunk_positions.length--;
 	},
 
 	// Generate buffers
 	buffer(gl) {
-		// TODO: Use x and z as offsets, apply noise
 		this.buffers = twgl.createBufferInfoFromArrays(gl, {
-			position: { numComponents: 3, data: this.batch_pos.data },
-			color: { numComponents: 4, data: this.batch_color.data },
+			position: { numComponents: 3, data: this.chunk_data.position },
+			color: { numComponents: 4, data: this.chunk_data.color },
 			// indices: this.indices
 		});
 	},
@@ -182,21 +207,11 @@ const Ground = {
 		};
 
 		if(this.player_chunk.x !== this.last_player_chunk.x || this.player_chunk.z !== this.last_player_chunk.z) {
-			console.time('ChunkGen');
-			// this.clear_chunks();
+			if(this.avail_chunks.length === 0)
+				this.remove_furthest_chunk(player);
 
-			let is_available = true;
-
-			for(let c in this.chunks)
-				if(this.chunks[c].x === this.player_chunk.x && this.chunks[c].z === this.player_chunk.z)
-					is_available = false;
-
-			if(is_available) {
-				this.gen_chunk(this.player_chunk.x, this.player_chunk.z);
-				this.batch();
-				this.buffer(gl);
-			}
-			console.timeEnd('ChunkGen');
+			this.gen_chunk(this.player_chunk.x, this.player_chunk.z);
+			this.buffer(gl);
 		}
 
 		this.last_player_chunk.x = this.player_chunk.x;

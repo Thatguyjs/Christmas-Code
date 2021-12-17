@@ -11,6 +11,7 @@ await Ground.init(gl, {
 	rows: 50,
 	cols: 50,
 	spacing: 0.5,
+	chunk_pool_size: 4,
 	height_func: (x, z) => {
 		return Math.sin(x ^ (z * 10)) * Math.cos(z ^ (x * 10)) * 0.2 + 0.4;
 	},
