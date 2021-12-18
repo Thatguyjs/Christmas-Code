@@ -46,14 +46,15 @@ const Ground = {
 		this.buffer(gl);
 	},
 
-	gen_chunk(x, z) {
+	gen_chunk(x, z, save_index=null) {
 		// Make sure the chunk isn't already generated
-		for(let c = 0; c < this.chunk_positions.length; c++)
-			if(this.chunk_positions.x[c] === x && this.chunk_positions.z[c] === z)
-				return;
+		if(save_index === null)
+			for(let c = 0; c < this.chunk_positions.length; c++)
+				if(this.chunk_positions.x[c] === x && this.chunk_positions.z[c] === z)
+					return;
 
 		// Remove the last generated chunk if we've reached the limit
-		if(this.avail_chunks.length === 0)
+		if(save_index === null && this.avail_chunks.length === 0)
 			return;
 
 		const offset = {
@@ -61,7 +62,7 @@ const Ground = {
 			z: this.cols / 2 * this.spacing + z * this.cols * this.spacing
 		};
 
-		let avail_chunk = this.avail_chunks.shift();
+		const avail_chunk = save_index !== null ? save_index : this.avail_chunks.shift();
 		const start_pos = avail_chunk * 18 * this.rows * this.cols;
 		const start_col = avail_chunk * 24 * this.rows * this.cols;
 
@@ -144,11 +145,30 @@ const Ground = {
 			}
 		}
 
-		this.chunk_order.push(avail_chunk);
+		if(!save_index) {
+			this.chunk_order.push(avail_chunk);
 
-		this.chunk_positions.x.push(x);
-		this.chunk_positions.z.push(z);
-		this.chunk_positions.length++;
+			this.chunk_positions.x.push(x);
+			this.chunk_positions.z.push(z);
+			this.chunk_positions.length++;
+		}
+		else {
+			this.chunk_positions.x[save_index] = x;
+			this.chunk_positions.z[save_index] = z;
+		}
+	},
+
+	replace_chunk(index, x, y) {
+		this.gen_chunk(x, y, index);
+	},
+
+	remove_chunk(index) {
+		if(index < 0 || index > this.chunk_order.length) return;
+		this.avail_chunks.push(this.chunk_order.splice(index, 1)[0]);
+
+		this.chunk_positions.x.splice(index, 1);
+		this.chunk_positions.z.splice(index, 1);
+		this.chunk_positions.length--;
 	},
 
 	remove_last_chunk() {
@@ -183,11 +203,7 @@ const Ground = {
 			}
 		}
 
-		this.avail_chunks.push(this.chunk_order.splice(furthest.index, 1)[0]);
-
-		this.chunk_positions.x.splice(furthest.index, 1);
-		this.chunk_positions.z.splice(furthest.index, 1);
-		this.chunk_positions.length--;
+		this.remove_chunk(furthest.index);
 	},
 
 	// Generate buffers
@@ -207,10 +223,12 @@ const Ground = {
 		};
 
 		if(this.player_chunk.x !== this.last_player_chunk.x || this.player_chunk.z !== this.last_player_chunk.z) {
-			if(this.avail_chunks.length === 0)
-				this.remove_furthest_chunk(player);
+			for(let i = -1; i <= 1; i++) {
+				for(let j = -1; j <= 1; j++) {
+					this.replace_chunk(i + 1 + (j + 1) * 3, this.player_chunk.x + i, this.player_chunk.z + j);
+				}
+			}
 
-			this.gen_chunk(this.player_chunk.x, this.player_chunk.z);
 			this.buffer(gl);
 		}
 
