@@ -1,4 +1,5 @@
 import Ground from "./ground.mjs";
+import Snow from "./snow.mjs";
 import Player from "./player.mjs";
 
 
@@ -25,6 +26,19 @@ await Ground.init(gl, {
 	}
 });
 
+await Snow.init(gl, {
+	particles: 800,
+
+	y_func: (x, z) => {
+		return 5.0 + Math.random() * 5.0;
+	},
+
+	color_func: (x, y, z) => {
+		return [1.0, 1.0, 1.0, 1.0];
+		// return [Math.random(), Math.random(), Math.random(), 1.0];
+	}
+});
+
 Player.init();
 
 
@@ -32,9 +46,18 @@ const uniforms = {
 	world_mat: twgl.m4.identity(),
 	mv_mat: twgl.m4.identity(),
 	proj_mat: twgl.m4.perspective(65 * Math.PI / 180, canvas.width / canvas.height, 0.01, 100),
-	fog_dist: 15,
+	fog_dist: 15
+};
+
+const ground_uniforms = {
 	viewport_width: window.innerWidth
 };
+
+const snow_uniforms = {
+	player_pos: [-Player.pos.z, -Player.pos.x]
+};
+
+Snow.gen_particles(uniforms.fog_dist, snow_uniforms.player_pos);
 
 gl.clearColor(0.0, 0.0, 0.0, 1);
 gl.enable(gl.DEPTH_TEST);
@@ -52,8 +75,15 @@ function render() {
 	twgl.m4.rotateX(uniforms.mv_mat, Player.rot.y, uniforms.mv_mat);
 	twgl.m4.inverse(uniforms.mv_mat, uniforms.mv_mat);
 
+	snow_uniforms.player_pos[0] = -Player.pos.z;
+	snow_uniforms.player_pos[1] = -Player.pos.x;
+
 	Ground.update_chunks(gl, Player);
-	Ground.render(gl, uniforms);
+	Ground.render(gl, uniforms, ground_uniforms);
+
+	Snow.update(uniforms.fog_dist, snow_uniforms.player_pos);
+	Snow.buffer(gl);
+	Snow.render(gl, uniforms, snow_uniforms);
 
 	window.requestAnimationFrame(render);
 }

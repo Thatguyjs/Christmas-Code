@@ -240,9 +240,10 @@ const Ground = {
 		this.last_player_chunk.z = this.player_chunk.z;
 	},
 
-	render(gl, uniforms) {
+	render(gl, uniforms, ground_uniforms) {
 		gl.useProgram(this.program.program);
 		twgl.setUniforms(this.program, uniforms);
+		twgl.setUniforms(this.program, ground_uniforms);
 
 		twgl.setBuffersAndAttributes(gl, this.program, this.buffers);
 		twgl.drawBufferInfo(gl, gl.TRIANGLES, this.buffers);
