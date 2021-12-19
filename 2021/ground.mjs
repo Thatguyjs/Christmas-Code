@@ -46,6 +46,10 @@ const Ground = {
 		this.buffer(gl);
 	},
 
+	height_at(x, z) {
+		return this.height_func(x, z);
+	},
+
 	gen_chunk(x, z, save_index=null) {
 		// Make sure the chunk isn't already generated
 		if(save_index === null)

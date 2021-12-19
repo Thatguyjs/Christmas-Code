@@ -49,7 +49,7 @@ const Player = {
 		});
 	},
 
-	update() {
+	update(ground_y) {
 		let vel_dir = { x: Math.cos(this.rot.x), z: Math.sin(this.rot.x) };
 
 		if(this.keys & Player.FORWARD) {
@@ -70,6 +70,8 @@ const Player = {
 		}
 
 		const mag = Math.max(Math.sqrt(this.vel.x ** 2 + this.vel.z ** 2), 1);
+
+		this.vel.y = ground_y - (this.pos.y - 2);
 
 		this.pos.x += this.vel.x * this.vel.scale / mag;
 		this.pos.y += this.vel.y * this.vel.scale;
