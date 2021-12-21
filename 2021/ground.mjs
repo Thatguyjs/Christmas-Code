@@ -1,4 +1,5 @@
 import { shader_array } from "./shader.mjs";
+import Seed from "./seed.mjs";
 
 
 function dist_plane(o1, o2) {
@@ -9,6 +10,7 @@ function dist_plane(o1, o2) {
 const Ground = {
 	program: null,
 
+	seed: 0,
 	rows: 0,
 	cols: 0,
 	spacing: 0,
@@ -22,13 +24,14 @@ const Ground = {
 	chunk_pool_size: 0,
 
 	player_chunk: { x: 0, z: 0 },
-	last_player_chunk: { x: 0, z: 0 },
+	last_player_chunk: { x: -1, z: -1 },
 
 	buffers: null,
 
-	async init(gl, { rows, cols, spacing, chunk_pool_size, height_func, color_func }) {
+	async init(gl, { seed, rows, cols, spacing, chunk_pool_size, height_func, color_func }) {
 		this.program = twgl.createProgramInfo(gl, await shader_array('shaders/color'));
 
+		this.seed = seed;
 		this.rows = rows;
 		this.cols = cols;
 		this.spacing = spacing;
@@ -41,12 +44,10 @@ const Ground = {
 
 		for(let i = 0; i < chunk_pool_size; i++)
 			this.avail_chunks.push(i);
-
-		this.gen_chunk(0, 0);
-		this.buffer(gl);
 	},
 
 	height_at(x, z) {
+		Seed.set_seed(this.seed);
 		return this.height_func(x, z);
 	},
 
@@ -69,6 +70,8 @@ const Ground = {
 		const avail_chunk = save_index !== null ? save_index : this.avail_chunks.shift();
 		const start_pos = avail_chunk * 18 * this.rows * this.cols;
 		const start_col = avail_chunk * 24 * this.rows * this.cols;
+
+		Seed.set_seed(this.seed);
 
 		for(let c = 0; c < this.cols; c++) {
 			for(let r = 0; r < this.rows; r++) {
@@ -162,8 +165,8 @@ const Ground = {
 		}
 	},
 
-	replace_chunk(index, x, y) {
-		this.gen_chunk(x, y, index);
+	replace_chunk(index, x, z) {
+		this.gen_chunk(x, z, index);
 	},
 
 	remove_chunk(index) {

@@ -1,25 +1,36 @@
 import { shader_array } from "./shader.mjs";
+import Seed from "./seed.mjs";
+import Ground from "./ground.mjs";
+
+
+function constrain(value, min, max) {
+	if(value < min) return min;
+	if(value > max) return max;
+	return value;
+}
 
 
 const Snow = {
 	program: null,
 
+	seed: 0,
 	particles: 0,
 	data: {
 		position: null,
 		color: null
 	},
 
-	ground_heights: null, // Ground height corresponding with each particle position
+	time: 0,
 
 	y_func: null,
 	color_func: null,
 
 	buffers: null,
 
-	async init(gl, { particles, y_func, color_func }) {
+	async init(gl, { seed, particles, y_func, color_func }) {
 		this.program = twgl.createProgramInfo(gl, await shader_array('shaders/snow'));
 
+		this.seed = seed;
 		this.particles = particles;
 		this.data.position = new Float32Array(3 * particles);
 		this.data.color = new Float32Array(4 * particles);
@@ -64,20 +75,35 @@ const Snow = {
 	},
 
 	update(fog_dist, player_pos) {
-		for(let i = 0; i < this.particles; i++) {
-			this.data.position[i * 3 + 1] -= 0.01;
+		this.time++;
+		Seed.set_seed(this.seed);
 
-			if(player_pos[0] - this.data.position[i * 3] > fog_dist)
+		for(let i = 0; i < this.particles; i++) {
+			let x = this.data.position[i * 3];
+			let y = this.data.position[i * 3 + 1];
+			let z = this.data.position[i * 3 + 2];
+
+			let angle = noise.perlin3(x, y / 50, z) * Math.PI * 2;
+
+			this.data.position[i * 3] += Math.cos(angle) / 150;
+			this.data.position[i * 3 + 1] -= 0.01;
+			this.data.position[i * 3 + 2] += Math.sin(angle) / 150;
+
+			x = this.data.position[i * 3];
+			y = this.data.position[i * 3 + 1];
+			z = this.data.position[i * 3 + 2];
+
+			if(player_pos[0] - x > fog_dist)
 				this.data.position[i * 3] += fog_dist * 2;
-			else if(this.data.position[i * 3] - player_pos[0] > fog_dist)
+			else if(x - player_pos[0] > fog_dist)
 				this.data.position[i * 3] -= fog_dist * 2;
 
-			if(player_pos[1] - this.data.position[i * 3 + 2] > fog_dist)
+			if(player_pos[1] - z > fog_dist)
 				this.data.position[i * 3 + 2] += fog_dist * 2;
-			else if(this.data.position[i * 3 + 2] - player_pos[1] > fog_dist)
+			else if(z - player_pos[1] > fog_dist)
 				this.data.position[i * 3 + 2] -= fog_dist * 2;
 
-			if(this.data.position[i * 3 + 1] <= 0)
+			if(y <= Ground.height_at(x, z))
 				this.gen_particle(i, fog_dist, player_pos);
 		}
 	},

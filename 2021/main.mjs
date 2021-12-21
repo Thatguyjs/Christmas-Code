@@ -6,10 +6,10 @@ import Player from "./player.mjs";
 const canvas = document.getElementById('cnv');
 const gl = canvas.getContext('webgl2');
 
-noise.seed(Math.random());
 twgl.resizeCanvasToDisplaySize(canvas);
 
 await Ground.init(gl, {
+	seed: Math.random(),
 	rows: 35,
 	cols: 35,
 	spacing: 0.5,
@@ -27,10 +27,11 @@ await Ground.init(gl, {
 });
 
 await Snow.init(gl, {
-	particles: 800,
+	seed: Math.random(),
+	particles: 900,
 
 	y_func: (x, z) => {
-		return 5.0 + Math.random() * 5.0;
+		return 5.0 + Math.random() * 6.0;
 	},
 
 	color_func: (x, y, z) => {

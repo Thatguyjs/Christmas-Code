@@ -29,7 +29,7 @@ const Player = {
 
 	pos: { x: 0, y: 0, z: 0 },
 	camera_pos: { x: 0, y: 0, z: 0 }, // Loop camera x and z
-	vel: { x: 0, y: 0, z: 0, scale: 0.1, slow: 0.8 },
+	vel: { x: 0, y: 0, z: 0, scale: 0.06, slow: 0.8 },
 	rot: { x: 0, y: 0, scale: 0.1 * Math.PI / 180, min_y: -90 * Math.PI / 180, max_y: 90 * Math.PI / 180 },
 
 	keys: 0, // Key bitmap
@@ -43,7 +43,8 @@ const Player = {
 		});
 
 		window.addEventListener('mousemove', (ev) => {
-			this.rot.x = (this.rot.x - ev.movementX * this.rot.scale) % (Math.PI * 2);
+			this.rot.x -= ev.movementX * this.rot.scale;
+			this.rot.x %= Math.PI * 2;
 			this.rot.y -= ev.movementY * this.rot.scale;
 			this.rot.y = constrain(this.rot.y, this.rot.min_y, this.rot.max_y);
 		});
@@ -71,7 +72,7 @@ const Player = {
 
 		const mag = Math.max(Math.sqrt(this.vel.x ** 2 + this.vel.z ** 2), 1);
 
-		this.vel.y = ground_y - (this.pos.y - 2);
+		this.vel.y = (ground_y - (this.pos.y - 2)) / 1.5;
 
 		this.pos.x += this.vel.x * this.vel.scale / mag;
 		this.pos.y += this.vel.y * this.vel.scale;
