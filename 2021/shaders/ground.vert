@@ -8,13 +8,21 @@ uniform mat4 world_mat;
 uniform mat4 mv_mat;
 uniform mat4 proj_mat;
 
-out vec4 f_color;
+uniform vec2 player_pos;
+
+out vec3 f_color;
+out vec3 f_pos;
 out float vert_dist;
+
+float dist(vec2 v1, vec2 v2) {
+	return sqrt(pow(v1.x - v2.x, 2.0) + pow(v1.y - v2.y, 2.0));
+}
 
 void main() {
 	vec4 res_position = proj_mat * world_mat * mv_mat * position;
 	gl_Position = res_position;
 
-	f_color = color;
-	vert_dist = res_position.z;
+	f_color = color.rgb;
+	f_pos = position.xyz;
+	vert_dist = dist(player_pos, position.xz);
 }

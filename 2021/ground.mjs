@@ -17,7 +17,7 @@ const Ground = {
 	height_func: null,
 	color_func: null,
 
-	chunk_data: { position: null, color: null },
+	chunk_data: { position: null, color: null, indices: null },
 	chunk_positions: { x: [], z: [], length: 0 },
 	avail_chunks: [],
 	chunk_order: [],
@@ -29,18 +29,19 @@ const Ground = {
 	buffers: null,
 
 	async init(gl, { seed, rows, cols, spacing, chunk_pool_size, height_func, color_func }) {
-		this.program = twgl.createProgramInfo(gl, await shader_array('shaders/color'));
+		this.program = twgl.createProgramInfo(gl, await shader_array('shaders/ground'));
 
 		this.seed = seed;
-		this.rows = rows;
-		this.cols = cols;
+		this.rows = rows + 1;
+		this.cols = cols + 1;
 		this.spacing = spacing;
 		this.height_func = height_func;
 		this.color_func = color_func;
 
 		this.chunk_pool_size = chunk_pool_size;
-		this.chunk_data.position = new Float32Array(18 * rows * cols * this.chunk_pool_size);
-		this.chunk_data.color = new Float32Array(24 * rows * cols * this.chunk_pool_size);
+		this.chunk_data.position = new Float32Array(3 * this.rows * this.cols * this.chunk_pool_size);
+		this.chunk_data.color = new Float32Array(4 * this.rows * this.cols * this.chunk_pool_size);
+		this.chunk_data.indices = new Uint32Array(6 * this.rows * this.cols * this.chunk_pool_size);
 
 		for(let i = 0; i < chunk_pool_size; i++)
 			this.avail_chunks.push(i);
@@ -58,97 +59,54 @@ const Ground = {
 				if(this.chunk_positions.x[c] === x && this.chunk_positions.z[c] === z)
 					return;
 
-		// Remove the last generated chunk if we've reached the limit
+		// No chunks available
 		if(save_index === null && this.avail_chunks.length === 0)
 			return;
 
 		const offset = {
-			x: this.rows / 2 * this.spacing + x * this.rows * this.spacing,
-			z: this.cols / 2 * this.spacing + z * this.cols * this.spacing
+			x: this.cols / 2 * this.spacing + x * (this.cols - 1) * this.spacing,
+			z: this.rows / 2 * this.spacing + z * (this.rows - 1) * this.spacing
 		};
 
 		const avail_chunk = save_index !== null ? save_index : this.avail_chunks.shift();
-		const start_pos = avail_chunk * 18 * this.rows * this.cols;
-		const start_col = avail_chunk * 24 * this.rows * this.cols;
+		const start_pos = avail_chunk * 3 * this.rows * this.cols;
+		const start_col = avail_chunk * 4 * this.rows * this.cols;
+		const start_ind = avail_chunk * 6 * this.rows * this.cols;
 
 		Seed.set_seed(this.seed);
 
-		for(let c = 0; c < this.cols; c++) {
-			for(let r = 0; r < this.rows; r++) {
-				const r_s = r * this.spacing - offset.x;
-				const c_s = c * this.spacing - offset.z;
+		for(let r = 0; r < this.rows; r++) {
+			for(let c = 0; c < this.cols; c++) {
+				const r_s = r * this.spacing - offset.z;
+				const c_s = c * this.spacing - offset.x;
+				const y = this.height_func(c_s, r_s);
 
-				const y1 = this.height_func(r_s,                c_s);
-				const y2 = this.height_func(r_s + this.spacing, c_s);
-				const y3 = this.height_func(r_s,                c_s + this.spacing);
-				const y4 = this.height_func(r_s + this.spacing, c_s + this.spacing);
+				const pos_ind = start_pos + c * 3 + r * this.cols * 3;
 
-				const p1 = { x: r_s,                z: c_s };
-				const p2 = { x: r_s + this.spacing, z: c_s };
-				const p3 = { x: r_s,                z: c_s + this.spacing };
-				const p4 = { x: r_s + this.spacing, z: c_s + this.spacing };
+				this.chunk_data.position[pos_ind] = c_s;
+				this.chunk_data.position[pos_ind + 1] = y;
+				this.chunk_data.position[pos_ind + 2] = r_s;
 
-				const pos_ind = start_pos + r * 18 + c * this.rows * 18;
+				const color = this.color_func(c, r, y);
+				const col_ind = start_col + c * 4 + r * this.cols * 4;
 
-				this.chunk_data.position[pos_ind] = p1.x;
-				this.chunk_data.position[pos_ind + 1] = y1;
-				this.chunk_data.position[pos_ind + 2] = p1.z;
-				this.chunk_data.position[pos_ind + 3] = p2.x;
-				this.chunk_data.position[pos_ind + 4] = y2;
-				this.chunk_data.position[pos_ind + 5] = p2.z;
-				this.chunk_data.position[pos_ind + 6] = p3.x;
-				this.chunk_data.position[pos_ind + 7] = y3;
-				this.chunk_data.position[pos_ind + 8] = p3.z;
+				this.chunk_data.color[col_ind] = color[0];
+				this.chunk_data.color[col_ind + 1] = color[1];
+				this.chunk_data.color[col_ind + 2] = color[2];
+				this.chunk_data.color[col_ind + 3] = color[3];
 
-				this.chunk_data.position[pos_ind + 9] = p2.x;
-				this.chunk_data.position[pos_ind + 10] = y2;
-				this.chunk_data.position[pos_ind + 11] = p2.z;
-				this.chunk_data.position[pos_ind + 12] = p3.x;
-				this.chunk_data.position[pos_ind + 13] = y3;
-				this.chunk_data.position[pos_ind + 14] = p3.z;
-				this.chunk_data.position[pos_ind + 15] = p4.x;
-				this.chunk_data.position[pos_ind + 16] = y4;
-				this.chunk_data.position[pos_ind + 17] = p4.z;
+				if(r < this.rows - 1 && c < this.cols - 1) {
+					const dat_ind = start_ind + c * 6 + r * this.cols * 6;
+					const tri_ind = avail_chunk * this.rows * this.cols + c + r * this.cols;
 
-				const c1 = this.color_func(r, c, y1);
-				const c2 = this.color_func(r, c, y2);
-				const c3 = this.color_func(r, c, y3);
+					this.chunk_data.indices[dat_ind] = tri_ind;
+					this.chunk_data.indices[dat_ind + 1] = tri_ind + 1;
+					this.chunk_data.indices[dat_ind + 2] = tri_ind + this.cols;
 
-				const c4 = this.color_func(r, c, y2);
-				const c5 = this.color_func(r, c, y3);
-				const c6 = this.color_func(r, c, y4);
-
-				const col_ind = start_col + r * 24 + c * this.rows * 24;
-
-				this.chunk_data.color[col_ind] = c1[0];
-				this.chunk_data.color[col_ind + 1] = c1[1];
-				this.chunk_data.color[col_ind + 2] = c1[2];
-				this.chunk_data.color[col_ind + 3] = c1[3];
-
-				this.chunk_data.color[col_ind + 4] = c2[0];
-				this.chunk_data.color[col_ind + 5] = c2[1];
-				this.chunk_data.color[col_ind + 6] = c2[2];
-				this.chunk_data.color[col_ind + 7] = c2[3];
-
-				this.chunk_data.color[col_ind + 8] = c3[0];
-				this.chunk_data.color[col_ind + 9] = c3[1];
-				this.chunk_data.color[col_ind + 10] = c3[2];
-				this.chunk_data.color[col_ind + 11] = c3[3];
-
-				this.chunk_data.color[col_ind + 12] = c4[0];
-				this.chunk_data.color[col_ind + 13] = c4[1];
-				this.chunk_data.color[col_ind + 14] = c4[2];
-				this.chunk_data.color[col_ind + 15] = c4[3];
-
-				this.chunk_data.color[col_ind + 16] = c5[0];
-				this.chunk_data.color[col_ind + 17] = c5[1];
-				this.chunk_data.color[col_ind + 18] = c5[2];
-				this.chunk_data.color[col_ind + 19] = c5[3];
-
-				this.chunk_data.color[col_ind + 20] = c6[0];
-				this.chunk_data.color[col_ind + 21] = c6[1];
-				this.chunk_data.color[col_ind + 22] = c6[2];
-				this.chunk_data.color[col_ind + 23] = c6[3];
+					this.chunk_data.indices[dat_ind + 3] = tri_ind + 1;
+					this.chunk_data.indices[dat_ind + 4] = tri_ind + this.cols;
+					this.chunk_data.indices[dat_ind + 5] = tri_ind + this.cols + 1;
+				}
 			}
 		}
 
@@ -218,7 +176,7 @@ const Ground = {
 		this.buffers = twgl.createBufferInfoFromArrays(gl, {
 			position: { numComponents: 3, data: this.chunk_data.position },
 			color: { numComponents: 4, data: this.chunk_data.color },
-			// indices: this.indices
+			indices: this.chunk_data.indices
 		});
 	},
 

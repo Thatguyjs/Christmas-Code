@@ -17,7 +17,8 @@ const Snow = {
 	particles: 0,
 	data: {
 		position: null,
-		color: null
+		color: null,
+		age: null
 	},
 
 	time: 0,
@@ -34,6 +35,7 @@ const Snow = {
 		this.particles = particles;
 		this.data.position = new Float32Array(3 * particles);
 		this.data.color = new Float32Array(4 * particles);
+		this.data.age = new Float32Array(particles);
 
 		this.y_func = y_func;
 		this.color_func = color_func;
@@ -60,6 +62,8 @@ const Snow = {
 		this.data.color[index * 4 + 1] = color[1];
 		this.data.color[index * 4 + 2] = color[2];
 		this.data.color[index * 4 + 3] = color[3];
+
+		this.data.age[index] = 0;
 	},
 
 	gen_particles(fog_dist, player_pos) {
@@ -70,7 +74,8 @@ const Snow = {
 	buffer(gl) {
 		this.buffers = twgl.createBufferInfoFromArrays(gl, {
 			position: { numComponents: 3, data: this.data.position },
-			color: { numComponents: 4, data: this.data.color }
+			color: { numComponents: 4, data: this.data.color },
+			age: { numComponents: 1, data: this.data.age }
 		});
 	},
 
@@ -79,6 +84,8 @@ const Snow = {
 		Seed.set_seed(this.seed);
 
 		for(let i = 0; i < this.particles; i++) {
+			this.data.age[i]++;
+
 			let x = this.data.position[i * 3];
 			let y = this.data.position[i * 3 + 1];
 			let z = this.data.position[i * 3 + 2];
@@ -93,25 +100,32 @@ const Snow = {
 			y = this.data.position[i * 3 + 1];
 			z = this.data.position[i * 3 + 2];
 
-			if(player_pos[0] - x > fog_dist)
+			if(player_pos[0] - x > fog_dist) {
 				this.data.position[i * 3] += fog_dist * 2;
-			else if(x - player_pos[0] > fog_dist)
+				this.data.age[i] = 0;
+			}
+			else if(x - player_pos[0] > fog_dist) {
 				this.data.position[i * 3] -= fog_dist * 2;
+				this.data.age[i] = 0;
+			}
 
-			if(player_pos[1] - z > fog_dist)
+			if(player_pos[1] - z > fog_dist) {
 				this.data.position[i * 3 + 2] += fog_dist * 2;
-			else if(z - player_pos[1] > fog_dist)
+				this.data.age[i] = 0;
+			}
+			else if(z - player_pos[1] > fog_dist) {
 				this.data.position[i * 3 + 2] -= fog_dist * 2;
+				this.data.age[i] = 0;
+			}
 
 			if(y <= Ground.height_at(x, z))
 				this.gen_particle(i, fog_dist, player_pos);
 		}
 	},
 
-	render(gl, uniforms, snow_uniforms) {
+	render(gl, uniforms) {
 		gl.useProgram(this.program.program);
 		twgl.setUniforms(this.program, uniforms);
-		twgl.setUniforms(this.program, snow_uniforms);
 
 		twgl.setBuffersAndAttributes(gl, this.program, this.buffers);
 		twgl.drawBufferInfo(gl, gl.POINTS, this.buffers);

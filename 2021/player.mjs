@@ -29,7 +29,7 @@ const Player = {
 
 	pos: { x: 0, y: 0, z: 0 },
 	camera_pos: { x: 0, y: 0, z: 0 }, // Loop camera x and z
-	vel: { x: 0, y: 0, z: 0, scale: 0.06, slow: 0.8 },
+	vel: { x: 0, y: 0, z: 0, scale: 0.065, slow: 0.8 },
 	rot: { x: 0, y: 0, scale: 0.1 * Math.PI / 180, min_y: -90 * Math.PI / 180, max_y: 90 * Math.PI / 180 },
 
 	keys: 0, // Key bitmap
