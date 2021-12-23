@@ -19,8 +19,7 @@ float dist(vec2 v1, vec2 v2) {
 }
 
 void main() {
-	vec4 res_position = proj_mat * world_mat * mv_mat * position;
-	gl_Position = res_position;
+	gl_Position = proj_mat * world_mat * mv_mat * position;
 
 	f_color = color.rgb;
 	f_pos = position.xyz;

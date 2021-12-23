@@ -15,6 +15,7 @@ await Ground.init(gl, {
 	cols: 80,
 	spacing: 0.5,
 	chunk_pool_size: 9,
+	trees_per_chunk: 2,
 
 	height_func: (x, z) => {
 		let noise_y = noise.perlin2(x / 20, z / 20) * 2;
@@ -29,17 +30,18 @@ await Ground.init(gl, {
 });
 
 await Trees.init(gl, {
-	tree_count: 1,
-
 	color_func: (part) => {
 		if(part === 'trunk') {
-			// TODO
+			return [0.5, 0.3, 0.2, 1];
 		}
 		else {
-			// TODO
+			return [
+				Math.random() * 0.1,
+				Math.random() * 0.2 + 0.4,
+				Math.random() * 0.1 + 0.15,
+				1.0
+			];
 		}
-
-		return [Math.random(), Math.random(), Math.random(), 1.0];
 	}
 });
 
@@ -47,19 +49,16 @@ await Snow.init(gl, {
 	seed: Math.random(),
 	particles: 1200,
 
-	y_func: (x, z) => {
+	y_func: () => {
 		return 6.0 + Math.random() * 8.0;
 	},
 
-	color_func: (x, y, z) => {
+	color_func: () => {
 		return [1.0, 1.0, 1.0, 1.0];
 	}
 });
 
 Player.init();
-
-Trees.gen_tree(0);
-Trees.buffer(gl);
 
 
 const uniforms = {
@@ -95,10 +94,10 @@ function render() {
 	uniforms.player_pos[0] = -Player.pos.z;
 	uniforms.player_pos[1] = -Player.pos.x;
 
-	// Ground.update_chunks(gl, Player);
-	// Ground.render(gl, uniforms, ground_uniforms);
+	Ground.update_chunks(gl, Player);
+	Ground.render(gl, uniforms, ground_uniforms);
 
-	Trees.render(gl, uniforms);
+	Trees.render(gl, uniforms, ground_uniforms);
 
 	Snow.update(uniforms.fog_dist, uniforms.player_pos);
 	Snow.buffer(gl);

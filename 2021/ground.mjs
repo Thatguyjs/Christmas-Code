@@ -1,5 +1,6 @@
 import { shader_array } from "./shader.mjs";
 import Seed from "./seed.mjs";
+import Trees from "./tree.mjs";
 
 
 function dist_plane(o1, o2) {
@@ -17,6 +18,8 @@ const Ground = {
 	height_func: null,
 	color_func: null,
 
+	trees_per_chunk: 0,
+
 	chunk_data: { position: null, color: null, indices: null },
 	chunk_positions: { x: [], z: [], length: 0 },
 	avail_chunks: [],
@@ -24,11 +27,11 @@ const Ground = {
 	chunk_pool_size: 0,
 
 	player_chunk: { x: 0, z: 0 },
-	last_player_chunk: { x: -1, z: -1 },
+	last_player_chunk: { x: 0, z: -1 },
 
 	buffers: null,
 
-	async init(gl, { seed, rows, cols, spacing, chunk_pool_size, height_func, color_func }) {
+	async init(gl, { seed, rows, cols, spacing, chunk_pool_size, height_func, color_func, trees_per_chunk }) {
 		this.program = twgl.createProgramInfo(gl, await shader_array('shaders/ground'));
 
 		this.seed = seed;
@@ -37,6 +40,8 @@ const Ground = {
 		this.spacing = spacing;
 		this.height_func = height_func;
 		this.color_func = color_func;
+
+		this.trees_per_chunk = trees_per_chunk;
 
 		this.chunk_pool_size = chunk_pool_size;
 		this.chunk_data.position = new Float32Array(3 * this.rows * this.cols * this.chunk_pool_size);
@@ -52,17 +57,7 @@ const Ground = {
 		return this.height_func(x, z);
 	},
 
-	gen_chunk(x, z, save_index=null) {
-		// Make sure the chunk isn't already generated
-		if(save_index === null)
-			for(let c = 0; c < this.chunk_positions.length; c++)
-				if(this.chunk_positions.x[c] === x && this.chunk_positions.z[c] === z)
-					return;
-
-		// No chunks available
-		if(save_index === null && this.avail_chunks.length === 0)
-			return;
-
+	gen_chunk(x, z, save_index) {
 		const offset = {
 			x: this.cols / 2 * this.spacing + x * (this.cols - 1) * this.spacing,
 			z: this.rows / 2 * this.spacing + z * (this.rows - 1) * this.spacing
@@ -110,74 +105,21 @@ const Ground = {
 			}
 		}
 
-		if(!save_index) {
-			this.chunk_order.push(avail_chunk);
+		for(let t = 0; t < this.trees_per_chunk; t++) {
+			const tree_pos = {
+				x: Math.random() * this.cols * this.spacing - offset.x,
+				z: Math.random() * this.rows * this.spacing - offset.z
+			};
 
-			this.chunk_positions.x.push(x);
-			this.chunk_positions.z.push(z);
-			this.chunk_positions.length++;
+			Trees.gen_tree({ x, z }, tree_pos.x, tree_pos.z);
 		}
-		else {
-			this.chunk_positions.x[save_index] = x;
-			this.chunk_positions.z[save_index] = z;
-		}
+
+		this.chunk_positions.x[save_index] = x;
+		this.chunk_positions.z[save_index] = z;
 	},
 
 	replace_chunk(index, x, z) {
 		this.gen_chunk(x, z, index);
-	},
-
-	remove_chunk(index) {
-		if(index < 0 || index > this.chunk_order.length) return;
-		this.avail_chunks.push(this.chunk_order.splice(index, 1)[0]);
-
-		this.chunk_positions.x.splice(index, 1);
-		this.chunk_positions.z.splice(index, 1);
-		this.chunk_positions.length--;
-	},
-
-	remove_last_chunk() {
-		if(this.chunk_order.length === 0) return;
-		this.avail_chunks.push(this.chunk_order.shift());
-
-		this.chunk_positions.x.shift();
-		this.chunk_positions.z.shift();
-		this.chunk_positions.length--;
-	},
-
-	remove_furthest_chunk(player) {
-		if(this.chunk_order.length === 0) return;
-
-		let furthest = {
-			index: 0,
-			distance: 0
-		};
-
-		for(let i = 0; i < this.chunk_positions.length; i++) {
-			const chunk_dist = dist_plane({
-				x: this.chunk_positions.x[i],
-				z: this.chunk_positions.z[i]
-			}, {
-				x: player.pos.z / (this.rows * this.spacing),
-				z: player.pos.x / (this.cols * this.spacing)
-			});
-
-			if(chunk_dist > furthest.distance) {
-				furthest.index = i;
-				furthest.distance = chunk_dist;
-			}
-		}
-
-		this.remove_chunk(furthest.index);
-	},
-
-	// Generate buffers
-	buffer(gl) {
-		this.buffers = twgl.createBufferInfoFromArrays(gl, {
-			position: { numComponents: 3, data: this.chunk_data.position },
-			color: { numComponents: 4, data: this.chunk_data.color },
-			indices: this.chunk_data.indices
-		});
 	},
 
 	// Update which chunks are shown around the player
@@ -188,6 +130,17 @@ const Ground = {
 		};
 
 		if(this.player_chunk.x !== this.last_player_chunk.x || this.player_chunk.z !== this.last_player_chunk.z) {
+			let dir = { x: this.player_chunk.x - this.last_player_chunk.x, z: this.player_chunk.z - this.last_player_chunk.z };
+
+			if(dir.x !== 0) {
+				for(let z = -1; z <= 1; z++)
+					Trees.free_chunk(this.last_player_chunk.x - dir.x, this.player_chunk.z + z);
+			}
+			else if(dir.z !== 0) {
+				for(let x = -1; x <= 1; x++)
+					Trees.free_chunk(this.player_chunk.x + x, this.last_player_chunk.z - dir.z);
+			}
+
 			for(let i = -1; i <= 1; i++) {
 				for(let j = -1; j <= 1; j++) {
 					this.replace_chunk(i + 1 + (j + 1) * 3, this.player_chunk.x + i, this.player_chunk.z + j);
@@ -195,10 +148,20 @@ const Ground = {
 			}
 
 			this.buffer(gl);
+			Trees.buffer(gl);
 		}
 
 		this.last_player_chunk.x = this.player_chunk.x;
 		this.last_player_chunk.z = this.player_chunk.z;
+	},
+
+	// Generate buffers
+	buffer(gl) {
+		this.buffers = twgl.createBufferInfoFromArrays(gl, {
+			position: { numComponents: 3, data: this.chunk_data.position },
+			color: { numComponents: 4, data: this.chunk_data.color },
+			indices: this.chunk_data.indices
+		});
 	},
 
 	render(gl, uniforms, ground_uniforms) {
