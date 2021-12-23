@@ -1,4 +1,5 @@
 import Ground from "./ground.mjs";
+import Trees from "./tree.mjs";
 import Snow from "./snow.mjs";
 import Player from "./player.mjs";
 
@@ -27,6 +28,21 @@ await Ground.init(gl, {
 	}
 });
 
+await Trees.init(gl, {
+	tree_count: 1,
+
+	color_func: (part) => {
+		if(part === 'trunk') {
+			// TODO
+		}
+		else {
+			// TODO
+		}
+
+		return [Math.random(), Math.random(), Math.random(), 1.0];
+	}
+});
+
 await Snow.init(gl, {
 	seed: Math.random(),
 	particles: 1200,
@@ -42,11 +58,14 @@ await Snow.init(gl, {
 
 Player.init();
 
+Trees.gen_tree(0);
+Trees.buffer(gl);
+
 
 const uniforms = {
 	world_mat: twgl.m4.identity(),
 	mv_mat: twgl.m4.identity(),
-	proj_mat: twgl.m4.perspective(65 * Math.PI / 180, canvas.width / canvas.height, 0.01, 100),
+	proj_mat: twgl.m4.perspective(65 * Math.PI / 180, canvas.width / canvas.height, 0.05, 100),
 	fog_dist: 24,
 	player_pos: [-Player.pos.z, -Player.pos.x]
 };
@@ -76,8 +95,10 @@ function render() {
 	uniforms.player_pos[0] = -Player.pos.z;
 	uniforms.player_pos[1] = -Player.pos.x;
 
-	Ground.update_chunks(gl, Player);
-	Ground.render(gl, uniforms, ground_uniforms);
+	// Ground.update_chunks(gl, Player);
+	// Ground.render(gl, uniforms, ground_uniforms);
+
+	Trees.render(gl, uniforms);
 
 	Snow.update(uniforms.fog_dist, uniforms.player_pos);
 	Snow.buffer(gl);
