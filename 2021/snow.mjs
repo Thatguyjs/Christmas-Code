@@ -76,7 +76,7 @@ const Snow = {
 			let y = this.data.position[i * 3 + 1];
 			let z = this.data.position[i * 3 + 2];
 
-			let angle = noise.perlin3(x, y / 50, z) * Math.PI * 2;
+			let angle = noise.perlin3(x, y / 20, z) * Math.PI * 2;
 
 			this.data.position[i * 3] += Math.cos(angle) / 150;
 			this.data.position[i * 3 + 1] -= 0.01;

@@ -56,7 +56,7 @@ await Rocks.init(gl, {
 
 await Snow.init(gl, {
 	seed: Math.random(),
-	particles: 1200,
+	particles: 1400,
 
 	y_func: () => {
 		return 6.0 + Math.random() * 8.0;

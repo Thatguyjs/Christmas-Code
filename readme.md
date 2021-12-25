@@ -2,7 +2,7 @@
 
 ### Available years
 - [2020](https://thatguyjs.github.io/Christmas-Code/2020/)
-- 2021 (In progress)
+- [2021](https://thatguyjs.github.io/Christmas-Code/2021/)
 
 
 ## FAQ
