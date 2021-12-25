@@ -1,5 +1,6 @@
 import Ground from "./ground.mjs";
 import Trees from "./tree.mjs";
+import Rocks from "./rocks.mjs";
 import Snow from "./snow.mjs";
 import Player from "./player.mjs";
 
@@ -15,7 +16,9 @@ await Ground.init(gl, {
 	cols: 80,
 	spacing: 0.5,
 	chunk_pool_size: 9,
+
 	trees_per_chunk: 2,
+	rocks_per_chunk: 3,
 
 	height_func: (x, z) => {
 		let noise_y = noise.perlin2(x / 20, z / 20) * 2;
@@ -23,7 +26,7 @@ await Ground.init(gl, {
 		return noise_y + rand;
 	},
 
-	color_func: (x, z, height) => {
+	color_func: (_x, _y, height) => {
 		height = height / 2 * 0.4 + 0.65;
 		return [height, height, height, 1.0];
 	}
@@ -32,16 +35,22 @@ await Ground.init(gl, {
 await Trees.init(gl, {
 	color_func: (part) => {
 		if(part === 'trunk') {
-			return [0.5, 0.3, 0.2, 1];
+			const rand = Math.random() * 0.06;
+			return [0.3 + rand, 0.15 + rand, 0.1, 1];
 		}
 		else {
-			return [
-				Math.random() * 0.1,
-				Math.random() * 0.2 + 0.4,
-				Math.random() * 0.1 + 0.15,
-				1.0
-			];
+			const rand = Math.random() * 0.07;
+			return [0.05, 0.3 + rand, 0.1 + rand, 1];
 		}
+	}
+});
+
+await Rocks.init(gl, {
+	group_size: 8,
+
+	color_func: () => {
+		const rand = Math.random() * 0.2;
+		return [0.3 + rand, 0.3 + rand, 0.3 + rand, 1];
 	}
 });
 
@@ -54,7 +63,7 @@ await Snow.init(gl, {
 	},
 
 	color_func: () => {
-		return [1.0, 1.0, 1.0, 1.0];
+		return [1, 1, 1, 1];
 	}
 });
 
@@ -98,6 +107,8 @@ function render() {
 	Ground.render(gl, uniforms, ground_uniforms);
 
 	Trees.render(gl, uniforms, ground_uniforms);
+
+	Rocks.render(gl, uniforms, ground_uniforms);
 
 	Snow.update(uniforms.fog_dist, uniforms.player_pos);
 	Snow.buffer(gl);

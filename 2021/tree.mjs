@@ -27,11 +27,11 @@ const Template = {
 		],
 		[
 			0.545, 1.85,
-			0.1, 3.45
+			0.1, 3.3
 		],
 		[
 			0.435, 2.45,
-			0, 3.8
+			0, 3.7
 		]
 	],
 
@@ -91,7 +91,7 @@ const Trees = {
 	program: null,
 
 	count: 0,
-	chunks: [], // Chunk locations that already have trees
+	chunks: [], // Chunk locations that already contain trees
 	available: [],
 
 	data: {
@@ -105,7 +105,7 @@ const Trees = {
 	buffers: null,
 
 	async init(gl, { color_func }) {
-		this.program = twgl.createProgramInfo(gl, await shader_array('shaders/tree'));
+		this.program = twgl.createProgramInfo(gl, await shader_array('shaders/foliage'));
 		Template.generate();
 
 		this.count = Ground.trees_per_chunk * Ground.chunk_pool_size;

@@ -24,5 +24,5 @@ vec3 lerp3(vec3 start, vec3 stop, float amt) {
 
 
 void main() {
-	out_color = vec4(lerp3(f_color, fog_color, min(pow(vert_dist / fog_dist, 4.0), 1.0)), 1.0);
+	out_color = vec4(lerp3(f_color, fog_color, min(pow(vert_dist / fog_dist, 2.0), 1.0)), 1.0);
 }

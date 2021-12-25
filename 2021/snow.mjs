@@ -3,13 +3,6 @@ import Seed from "./seed.mjs";
 import Ground from "./ground.mjs";
 
 
-function constrain(value, min, max) {
-	if(value < min) return min;
-	if(value > max) return max;
-	return value;
-}
-
-
 const Snow = {
 	program: null,
 
@@ -47,16 +40,9 @@ const Snow = {
 		this.data.position[index * 3] = (Math.random() * 2 - 1) * fog_dist + player_pos[0];
 		this.data.position[index * 3 + 2] = (Math.random() * 2 - 1) * fog_dist + player_pos[1];
 
-		this.data.position[index * 3 + 1] = this.y_func(
-			this.data.position[index * 3],
-			this.data.position[index * 3 + 2]
-		);
+		this.data.position[index * 3 + 1] = this.y_func();
 
-		const color = this.color_func(
-			this.data.position[index * 3],
-			this.data.position[index * 3 + 1],
-			this.data.position[index * 3 + 2]
-		);
+		const color = this.color_func();
 
 		this.data.color[index * 4] = color[0];
 		this.data.color[index * 4 + 1] = color[1];

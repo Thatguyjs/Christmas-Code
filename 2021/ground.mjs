@@ -1,11 +1,7 @@
 import { shader_array } from "./shader.mjs";
 import Seed from "./seed.mjs";
 import Trees from "./tree.mjs";
-
-
-function dist_plane(o1, o2) {
-	return Math.sqrt((o1.x - o2.x) ** 2 + (o1.z - o2.z) ** 2);
-}
+import Rocks from "./rocks.mjs";
 
 
 const Ground = {
@@ -19,6 +15,7 @@ const Ground = {
 	color_func: null,
 
 	trees_per_chunk: 0,
+	rocks_per_chunk: 0,
 
 	chunk_data: { position: null, color: null, indices: null },
 	chunk_positions: { x: [], z: [], length: 0 },
@@ -31,7 +28,7 @@ const Ground = {
 
 	buffers: null,
 
-	async init(gl, { seed, rows, cols, spacing, chunk_pool_size, height_func, color_func, trees_per_chunk }) {
+	async init(gl, { seed, rows, cols, spacing, chunk_pool_size, height_func, color_func, trees_per_chunk, rocks_per_chunk }) {
 		this.program = twgl.createProgramInfo(gl, await shader_array('shaders/ground'));
 
 		this.seed = seed;
@@ -42,6 +39,7 @@ const Ground = {
 		this.color_func = color_func;
 
 		this.trees_per_chunk = trees_per_chunk;
+		this.rocks_per_chunk = rocks_per_chunk;
 
 		this.chunk_pool_size = chunk_pool_size;
 		this.chunk_data.position = new Float32Array(3 * this.rows * this.cols * this.chunk_pool_size);
@@ -114,6 +112,15 @@ const Ground = {
 			Trees.gen_tree({ x, z }, tree_pos.x, tree_pos.z);
 		}
 
+		for(let r = 0; r < this.rocks_per_chunk; r++) {
+			const rock_pos = {
+				x: Math.random() * this.cols * this.spacing - offset.x,
+				z: Math.random() * this.cols * this.spacing - offset.z
+			};
+
+			Rocks.gen_group({ x, z }, rock_pos.x, rock_pos.z);
+		}
+
 		this.chunk_positions.x[save_index] = x;
 		this.chunk_positions.z[save_index] = z;
 	},
@@ -133,12 +140,16 @@ const Ground = {
 			let dir = { x: this.player_chunk.x - this.last_player_chunk.x, z: this.player_chunk.z - this.last_player_chunk.z };
 
 			if(dir.x !== 0) {
-				for(let z = -1; z <= 1; z++)
+				for(let z = -1; z <= 1; z++) {
 					Trees.free_chunk(this.last_player_chunk.x - dir.x, this.player_chunk.z + z);
+					Rocks.free_chunk(this.last_player_chunk.x - dir.x, this.player_chunk.z + z);
+				}
 			}
 			else if(dir.z !== 0) {
-				for(let x = -1; x <= 1; x++)
+				for(let x = -1; x <= 1; x++) {
 					Trees.free_chunk(this.player_chunk.x + x, this.last_player_chunk.z - dir.z);
+					Rocks.free_chunk(this.player_chunk.x + x, this.last_player_chunk.z - dir.z);
+				}
 			}
 
 			for(let i = -1; i <= 1; i++) {
@@ -149,6 +160,7 @@ const Ground = {
 
 			this.buffer(gl);
 			Trees.buffer(gl);
+			Rocks.buffer(gl);
 		}
 
 		this.last_player_chunk.x = this.player_chunk.x;
