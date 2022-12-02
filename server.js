@@ -38,7 +38,7 @@ function input(prompt) {
 
 async function avail_years() {
 	const dirs = await pfs.readdir('./', { withFileTypes: true });
-	const ignore = ['include', '.git'];
+	const ignore = ['include', '.git', 'libs'];
 
 	return dirs.filter(dir => dir.isDirectory() && !ignore.includes(dir.name)).map(dir => dir.name);
 }

@@ -1,6 +1,6 @@
 [submodule "twgl.js"]
-	path = 2021/twgl.js
+	path = libs/twgl.js
 	url = https://github.com/greggman/twgl.js
 [submodule "noisejs"]
-	path = 2021/noisejs
+	path = libs/noisejs
 	url = https://github.com/josephg/noisejs
