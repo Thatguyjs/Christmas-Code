@@ -1,0 +1,15 @@
+{
+  "name": "christmas-code",
+  "version": "1.0.0",
+  "description": "A collection of animations / renders for Christmas",
+  "main": "server.mjs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Thatguyjs/Christmas-Code.git"
+  },
+  "author": "Thatguyjs",
+  "bugs": {
+    "url": "https://github.com/Thatguyjs/Christmas-Code/issues"
+  },
+  "homepage": "https://github.com/Thatguyjs/Christmas-Code#readme"
+}
