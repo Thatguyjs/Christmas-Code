@@ -7,7 +7,10 @@ uniform mat4 mv_mat;
 
 in vec4 position;
 
+in vec4 color;
+out vec4 f_color;
+
 void main() {
-	// TODO: Apply matrix transformations
-	gl_Position = position;
+	gl_Position = proj_mat * mv_mat * position;
+	f_color = color;
 }
