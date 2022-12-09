@@ -14,9 +14,19 @@ class Mesh {
 		this.buffers = twgl.createBufferInfoFromArrays(gl, this.mesh_data);
 	}
 
-	// TODO: Better way of doing this??
+	// bufferSubData() should be faster than using twgl.createBufferInfoFromArrays()
 	update_data(gl) {
-		this.buffers = twgl.createBufferInfoFromArrays(gl, this.mesh_data);
+		for(let a in this.buffers.attribs) {
+			const attrib = this.buffers.attribs[a];
+			const target = (a === 'indices') ? gl.ELEMENT_ARRAY_BUFFER : gl.ARRAY_BUFFER;
+
+			let data = this.mesh_data[a];
+			if('numComponents' in data)
+				data = data.data;
+
+			gl.bindBuffer(target, attrib.buffer);
+			gl.bufferSubData(target, 0, data);
+		}
 	}
 
 	render(gl, mode=gl.TRIANGLES) {

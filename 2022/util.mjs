@@ -16,3 +16,16 @@ export async function shader_sources(path) {
 		sources[1].text()
 	]);
 }
+
+export function array_template(template) {
+	let arrays = {};
+
+	for(let t in template) {
+		if(template[t] > 0)
+			arrays[t] = { numComponents: template[t], data: null };
+		else
+			arrays[t] = null;
+	}
+
+	return arrays;
+}
