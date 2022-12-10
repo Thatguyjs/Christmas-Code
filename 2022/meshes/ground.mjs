@@ -17,28 +17,32 @@ const GroundMesh = {
 
 	// Generate the actual mesh data
 	generate_arrays() {
-		this.arrays.position.data = new Float32Array(3 * 9 * 9);
-		this.arrays.color.data = new Float32Array(4 * 9 * 9);
-		this.arrays.indices = new Uint16Array(6 * 8 * 8);
+		const rows = 50, cols = 50;
+		const row_v = rows + 1,
+			  col_v = cols + 1;
 
-		for(let x = 0; x <= 8; x++) {
-			for(let z = 0; z <= 8; z++) {
-				this.arrays.position.data[x * 3 + z * 3 * 9 + 0] = x;
-				this.arrays.position.data[x * 3 + z * 3 * 9 + 1] = Math.random();
-				this.arrays.position.data[x * 3 + z * 3 * 9 + 2] = z;
+		this.arrays.position.data = new Float32Array(3 * row_v * col_v);
+		this.arrays.color.data = new Float32Array(4 * row_v * col_v);
+		this.arrays.indices = new Uint16Array(6 * rows * cols);
 
-				this.arrays.color.data[x * 4 + z * 4 * 9 + 0] = Math.random();
-				this.arrays.color.data[x * 4 + z * 4 * 9 + 1] = Math.random();
-				this.arrays.color.data[x * 4 + z * 4 * 9 + 2] = Math.random();
-				this.arrays.color.data[x * 4 + z * 4 * 9 + 3] = 1;
+		for(let x = 0; x <= cols; x++) {
+			for(let z = 0; z <= rows; z++) {
+				this.arrays.position.data[x * 3 + z * 3 * col_v + 0] = x;
+				this.arrays.position.data[x * 3 + z * 3 * col_v + 1] = Math.random();
+				this.arrays.position.data[x * 3 + z * 3 * col_v + 2] = z;
 
-				if(x < 8 && z < 8) {
-					this.arrays.indices[x * 6 + z * 6 * 8 + 0] = x + z * 9;
-					this.arrays.indices[x * 6 + z * 6 * 8 + 1] = (x + 1) + z * 9;
-					this.arrays.indices[x * 6 + z * 6 * 8 + 2] = x + (z + 1) * 9;
-					this.arrays.indices[x * 6 + z * 6 * 8 + 3] = (x + 1) + z * 9;
-					this.arrays.indices[x * 6 + z * 6 * 8 + 4] = x + (z + 1) * 9;
-					this.arrays.indices[x * 6 + z * 6 * 8 + 5] = (x + 1) + (z + 1) * 9;
+				this.arrays.color.data[x * 4 + z * 4 * col_v + 0] = Math.random();
+				this.arrays.color.data[x * 4 + z * 4 * col_v + 1] = Math.random();
+				this.arrays.color.data[x * 4 + z * 4 * col_v + 2] = Math.random();
+				this.arrays.color.data[x * 4 + z * 4 * col_v + 3] = 1;
+
+				if(x < cols && z < rows) {
+					this.arrays.indices[x * 6 + z * 6 * cols + 0] = x + z * col_v;
+					this.arrays.indices[x * 6 + z * 6 * cols + 1] = (x + 1) + z * col_v;
+					this.arrays.indices[x * 6 + z * 6 * cols + 2] = x + (z + 1) * col_v;
+					this.arrays.indices[x * 6 + z * 6 * cols + 3] = (x + 1) + z * col_v;
+					this.arrays.indices[x * 6 + z * 6 * cols + 4] = x + (z + 1) * col_v;
+					this.arrays.indices[x * 6 + z * 6 * cols + 5] = (x + 1) + (z + 1) * col_v;
 				}
 			}
 		}
