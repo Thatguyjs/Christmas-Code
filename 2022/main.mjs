@@ -16,8 +16,20 @@ resize_canvas();
 
 const uniforms = {
 	proj_mat: twgl.m4.perspective(65 * Math.PI / 180, cnv.width / cnv.height, 0.1, 100),
-	mv_mat: twgl.m4.translation([0, 0, -4], twgl.m4.identity())
+	view_mat: twgl.m4.identity(),
+	model_mat: twgl.m4.translation([-4, -4, -4])
 };
+
+
+let rot = { y: 0, x: 0, scale: 0.01 };
+
+window.addEventListener('mousemove', ev => {
+	rot.y += ev.movementX * rot.scale;
+	rot.x += ev.movementY * rot.scale;
+
+	twgl.m4.rotationX(rot.x, uniforms.view_mat);
+	twgl.m4.rotateY(uniforms.view_mat, rot.y, uniforms.view_mat);
+});
 
 
 await GroundMesh.init(gl, uniforms);
@@ -33,7 +45,7 @@ function render(time) {
 
 	GroundMesh.render(gl);
 
-	// window.requestAnimationFrame(render);
+	window.requestAnimationFrame(render);
 }
 
 window.requestAnimationFrame(render);
