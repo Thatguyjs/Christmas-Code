@@ -29,3 +29,7 @@ export function array_template(template) {
 
 	return arrays;
 }
+
+export function lerp(from, to, amt) {
+	return (to - from) * amt + from;
+}

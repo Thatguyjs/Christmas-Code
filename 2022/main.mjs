@@ -77,13 +77,14 @@ function process_movement(elapsed) {
 await GroundMesh.init(gl, uniforms);
 
 gl.clearColor(0, 0, 0, 1);
+gl.enable(gl.DEPTH_TEST);
 let prev_time = 0;
 
 function render(time) {
 	const elapsed = time - prev_time; // Elapsed frame time in ms
 	prev_time = time;
 
-	gl.clear(gl.COLOR_BUFFER_BIT);
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	process_movement(elapsed);
 	GroundMesh.render(gl);

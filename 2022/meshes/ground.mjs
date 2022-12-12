@@ -1,4 +1,4 @@
-import { create_program, array_template } from "../util.mjs";
+import { create_program, array_template, lerp } from "../util.mjs";
 import Mesh from "../mesh.mjs";
 
 
@@ -15,20 +15,24 @@ const GroundMesh = {
 		this.mesh.set_data(gl, this.arrays);
 	},
 
+	height_at(x, z) {
+		return Math.random();
+	},
+
 	// Generate the actual mesh data
 	generate_arrays() {
-		const rows = 50, cols = 50;
+		const rows = 100, cols = 100;
 		const row_v = rows + 1,
 			  col_v = cols + 1;
 
 		this.arrays.position.data = new Float32Array(3 * row_v * col_v);
 		this.arrays.color.data = new Float32Array(4 * row_v * col_v);
-		this.arrays.indices = new Uint16Array(6 * rows * cols);
+		this.arrays.indices = new Uint32Array(6 * rows * cols);
 
 		for(let x = 0; x <= cols; x++) {
 			for(let z = 0; z <= rows; z++) {
 				this.arrays.position.data[x * 3 + z * 3 * col_v + 0] = x;
-				this.arrays.position.data[x * 3 + z * 3 * col_v + 1] = Math.random();
+				this.arrays.position.data[x * 3 + z * 3 * col_v + 1] = this.height_at(x, z);
 				this.arrays.position.data[x * 3 + z * 3 * col_v + 2] = z;
 
 				this.arrays.color.data[x * 4 + z * 4 * col_v + 0] = Math.random();
