@@ -51,7 +51,7 @@ const GroundMesh = {
 			}
 		}
 
-		console.log(this.arrays);
+		// console.log(this.arrays);
 	},
 
 	render(gl) {
